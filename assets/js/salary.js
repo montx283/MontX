@@ -84,3 +84,38 @@ $('txRows').onclick=e=>{const button=e.target.closest('[data-del]');if(button&&c
 $('exportStatementPdf').onclick=async()=>{const statement=statementMarkup();if(!statement)return;const safe=[statement.vendor.name,statement.site.name,statement.month].join('_').replace(/[^a-z0-9_-]+/gi,'_');await window.MontXPdf.download({filename:`MontX_Hisab_${safe}.pdf`,title:'Vendor Hisab Statement',subtitle:'',content:statement.html,showHeader:false});};
 window.addEventListener('storage',render);render();
 })();
+function sendPaymentToVendor(vendorName, amount, date, siteName = '') {
+  // 1. Find vendor's mobile number from saved Vendors list
+  const vendors = JSON.parse(localStorage.getItem('montx-vendors-v1') || '[]');
+  const vendor = vendors.find(v =>
+    (v.name || v.vendorName || '').toLowerCase() === (vendorName || '').toLowerCase()
+  );
+
+  // Use saved phone, or ask if missing
+  let rawPhone = vendor?.phone || vendor?.mobile || vendor?.contact || '';
+  if (!rawPhone) {
+    rawPhone = prompt(`Enter mobile number for ${vendorName || 'Vendor'}:`);
+    if (!rawPhone) return;
+  }
+
+  // Clean number and add 91 country code for 10-digit Indian numbers
+  let phone = rawPhone.replace(/\D/g, '');
+  if (phone.length === 10) phone = '91' + phone;
+
+  // 2. Trigger your existing PDF download (replace with your actual PDF export function)
+  if (typeof exportSalaryPDF === 'function') {
+    exportSalaryPDF();
+  }
+
+  // 3. Build WhatsApp message and open chat directly to vendor's number
+  const message =
+    `Hello ${vendorName || 'Sir'},\n` +
+    `Payment receipt details:\n` +
+    `• Amount: ₹${Number(amount || 0).toLocaleString('en-IN')}\n` +
+    `• Date: ${date || new Date().toISOString().slice(0, 10)}\n` +
+    (siteName ? `• Site: ${siteName}\n` : '') +
+    `\nPlease find the attached payment PDF.`;
+
+  const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+  window.open(whatsappUrl, '_blank');
+}
