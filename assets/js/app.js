@@ -88,7 +88,7 @@ if(canvas&&window.Chart){
 // =========================================================================
 // Google Sheets Two-Way Auto-Sync + Activity Trail for ALL MontX Modules
 // =========================================================================
-const GAS_WEB_APP_URL = "PASTE_YOUR_WEB_APP_URL_HERE";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzdLmUMDUSalCOwGXm4voiM5pdLlG65TwkRpBDbUaw2HUebSu7gSxo5QLlCURS7W1Ql/exec";
 
 const MONTX_SHEET_MODULES = {
   'montx-sites-v1': 'Sites',
