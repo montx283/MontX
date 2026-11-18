@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MontX | Construction Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<link href="assets/css/style.css" rel="stylesheet">
+</head>
+<body>
+<div class="glow glow-a"></div><div class="glow glow-b"></div>
+<div class="layout">
+<aside class="sidebar glass" id="sidebar">
+  <a class="brand" href="index.html" aria-label="MontX home"><span class="brand-icon"><i class="bi bi-buildings" aria-hidden="true"></i></span><span><b>MontX</b><small>CONSTRUCTION MANAGEMENT</small></span></a>
+  <div class="nav-label">WORKSPACE</div>
+  <nav class="nav flex-column" aria-label="Workspace navigation">
+    <a class="nav-link active" href="index.html" aria-current="page"><i class="bi bi-grid-1x2" aria-hidden="true"></i><span>Overview</span></a>
+<a class="nav-link" href="sites.html"><i class="bi bi-building" aria-hidden="true"></i><span>Projects &amp; Sites</span></a>
+<a class="nav-link" href="vendors.html"><i class="bi bi-people" aria-hidden="true"></i><span>Vendors</span></a>
+<a class="nav-link" href="attendance.html"><i class="bi bi-person-workspace" aria-hidden="true"></i><span>Labour &amp; Attendance</span></a>
+<a class="nav-link" href="salary.html"><i class="bi bi-wallet2" aria-hidden="true"></i><span>Salary &amp; Payments</span></a>
+<a class="nav-link" href="inventory.html"><i class="bi bi-box-seam" aria-hidden="true"></i><span>Inventory</span></a>
+<a class="nav-link" href="expenses.html"><i class="bi bi-receipt" aria-hidden="true"></i><span>Expenses</span></a>
+<a class="nav-link" href="reports.html"><i class="bi bi-graph-up-arrow" aria-hidden="true"></i><span>Project Cost Report</span></a>
+  <a class="nav-link" href="performance.html"><i class="bi bi-speedometer2" aria-hidden="true"></i><span>Performance</span></a>
+<a class="nav-link" href="data.html"><i class="bi bi-shield-check" aria-hidden="true"></i><span>Data &amp; Backup</span></a>
+  </nav>
+  <div class="sidebar-bottom">
+    
+    <div class="user"><span>MX</span><div><b>MontX Admin</b><small>Master workspace</small></div><i class="bi bi-three-dots" aria-hidden="true"></i></div>
+  </div>
+</aside>
+<main class="main">
+<header class="topbar"><button class="icon-btn mobile-menu" id="menuToggle"><i class="bi bi-list"></i></button><div class="crumb">Workspace <i class="bi bi-chevron-right"></i> <b>Overview</b></div>
+<div class="top-actions"><span class="live"><i></i> SYSTEM LIVE</span><button class="icon-btn"><i class="bi bi-bell"></i></button><button class="icon-btn" id="themeToggle"><i class="bi bi-moon-stars"></i></button><span class="mini-avatar">MX</span></div></header>
+<section class="welcome"><div><div class="eyebrow">MASTER WORKSPACE <span></span> <time id="overviewDate"></time></div><h1 id="overviewGreeting">Good morning<span>.</span></h1><p>Here’s what’s happening across your construction operations.</p></div><div class="quick-actions"><a class="btn btn-outline-soft" href="attendance.html"><i class="bi bi-person-plus"></i> Add attendance</a><a class="btn btn-outline-soft" href="expenses.html"><i class="bi bi-plus-lg"></i> Add income / expense</a></div></section>
+<section class="metrics">
+<article class="metric glass"><div class="metric-head">Total projects <i class="bi bi-buildings"></i></div><strong id="metricProjects">0</strong><small><em id="metricProjectsMeta">0 active</em> Across all sites</small><div class="bars"><i></i><i></i><i></i><i></i><i></i><i></i></div></article>
+<article class="metric glass"><div class="metric-head">Today's workforce <i class="bi bi-people"></i></div><strong id="metricWorkforce">0</strong><small><em id="metricWorkforceMeta">Today</em> Karigar + Majur</small><div class="bars"><i></i><i></i><i></i><i></i><i></i><i></i></div></article>
+<article class="metric glass"><div class="metric-head">Monthly project cost <i class="bi bi-wallet2"></i></div><strong id="metricMonthlyCost">₹0</strong><small><em class="muted" id="metricMonthlyCostMeta">This month</em> Labour + other expenses</small><div class="bars"><i></i><i></i><i></i><i></i><i></i><i></i></div></article>
+<article class="metric glass"><div class="metric-head">Pending payments <i class="bi bi-hourglass-split"></i></div><strong id="metricPending">₹0</strong><small><em class="warn" id="metricPendingMeta">0 vendors</em> Outstanding balance</small><div class="bars"><i></i><i></i><i></i><i></i><i></i><i></i></div></article>
+</section>
+<section class="lower">
+<article class="glass chart-card"><div class="section-head"><div><label>FINANCIAL OVERVIEW</label><h2>Cash flow</h2></div><span class="pill" id="cashflowPeriod">This year</span></div><div class="legend"><span>● Income</span><span>● Total cost</span></div><div class="chart-wrap"><canvas id="cashflowChart"></canvas></div></article>
+<article class="glass activity"><div class="section-head"><div><label>LIVE FEED</label><h2>Recent activity</h2></div><i class="bi bi-three-dots"></i></div>
+<div id="recentActivityList"><div class="empty-state">Loading recent activity…</div></div></article>
+</section>
+<section class="glass sites"><div class="section-head"><div><label>PROJECT TRACKER</label><h2>Active sites</h2></div><a href="sites.html">View all sites →</a></div>
+<div class="table-responsive"><table class="table align-middle"><thead><tr><th>PROJECT / SITE</th><th>WORKER DAYS</th><th>MONTHLY COST</th><th>STATUS</th></tr></thead><tbody id="overviewSiteRows"><tr><td colspan="4">Loading sites…</td></tr></tbody></table></div></section>
+<footer>© 2026 MontX Construction Management <span><i class="bi bi-shield-check"></i> Workspace protected</span></footer>
+</main></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script><script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script><script src="assets/js/custom-select.js?v=2"></script><script src="assets/js/app.js"></script><script src="assets/js/overview.js"></script>
+</body></html>

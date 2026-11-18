@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>MontX | Inventory</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="assets/css/style.css" rel="stylesheet">
+  <style>
+    .page-head{display:flex;justify-content:space-between;align-items:end;gap:16px;margin:32px 0 22px}.page-head h1{margin:8px 0 4px}.page-head p{font-size:12px;color:var(--text-muted);margin:0}
+    .inventory-panel{padding:20px;margin-bottom:16px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:16px}
+    .inventory-toolbar{display:grid;grid-template-columns:minmax(190px,1.4fr) minmax(160px,1fr) repeat(2,minmax(145px,.8fr)) auto;gap:10px;margin:18px 0}
+    .inventory-toolbar .form-control,.inventory-toolbar .form-select{min-height:42px}
+    .table-wrap{width:100%;overflow:auto}
+    .inventory-table{width:100%;min-width:850px;border-collapse:collapse}
+    .inventory-table th,.inventory-table td{padding:12px 10px;border-bottom:1px solid var(--border);font-size:11px;vertical-align:middle}
+    .inventory-table th{color:var(--text-muted);font-size:9px;letter-spacing:.8px;text-transform:uppercase;white-space:nowrap;background:var(--bg-tertiary)}
+    .inventory-table td{color:var(--text-secondary)}
+    .form-control,.form-select{background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);font-size:12px;border-radius:11px}
+    .form-control:focus,.form-select:focus{background:var(--bg-secondary);color:var(--text-primary);border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light)}
+    .form-select option{color:var(--text-primary)}
+    .location-list{display:flex;flex-wrap:wrap;gap:6px;min-width:230px}
+    .location-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 7px 5px 9px;border:1px solid var(--border);background:var(--bg-tertiary);border-radius:9px;font-size:10px;white-space:nowrap}
+    .location-chip button{border:0;background:transparent;color:var(--accent);padding:0 2px;font-size:12px}
+    .qty-edit{border:0;background:transparent;color:var(--accent);padding:2px 5px;border-radius:6px}
+    .qty-edit:hover{background:var(--accent-light);color:var(--accent-dark)}
+    .muted-note{color:var(--text-muted);font-size:10px}
+    .empty-state{text-align:center;padding:26px!important;color:var(--text-muted)!important}
+    .section-title{font-size:14px;font-weight:800;margin:0;color:var(--text-primary)}
+    .section-subtitle{font-size:10px;color:var(--text-muted);margin:4px 0 0}
+    .panel-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
+    .metric .metric-head{min-height:28px}
+    @media(max-width:1050px){.inventory-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}.inventory-toolbar .search-field{grid-column:1/-1}}
+    @media(max-width:600px){.inventory-panel{padding:14px}.inventory-toolbar{grid-template-columns:1fr 1fr;gap:8px}.inventory-toolbar .search-field{grid-column:1/-1}.page-head{align-items:flex-start;gap:12px;flex-wrap:wrap}.page-head .btn{font-size:10px}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.inventory-table th,.inventory-table td{padding:10px 8px}}
+  </style>
+</head>
+<body>
+<div class="glow glow-a"></div><div class="glow glow-b"></div>
+<div class="layout">
+  <aside class="sidebar glass" id="sidebar">
+  <a class="brand" href="index.html" aria-label="MontX home"><span class="brand-icon"><i class="bi bi-buildings" aria-hidden="true"></i></span><span><b>MontX</b><small>CONSTRUCTION MANAGEMENT</small></span></a>
+  <div class="nav-label">WORKSPACE</div>
+  <nav class="nav flex-column" aria-label="Workspace navigation">
+    <a class="nav-link" href="index.html"><i class="bi bi-grid-1x2" aria-hidden="true"></i><span>Overview</span></a>
+<a class="nav-link" href="sites.html"><i class="bi bi-building" aria-hidden="true"></i><span>Projects & Sites</span></a>
+<a class="nav-link" href="vendors.html"><i class="bi bi-people" aria-hidden="true"></i><span>Vendors</span></a>
+<a class="nav-link" href="attendance.html"><i class="bi bi-person-workspace" aria-hidden="true"></i><span>Labour & Attendance</span></a>
+<a class="nav-link" href="salary.html"><i class="bi bi-wallet2" aria-hidden="true"></i><span>Salary & Payments</span></a>
+<a class="nav-link active" href="inventory.html" aria-current="page"><i class="bi bi-box-seam" aria-hidden="true"></i><span>Inventory</span></a>
+<a class="nav-link" href="expenses.html"><i class="bi bi-receipt" aria-hidden="true"></i><span>Expenses</span></a>
+<a class="nav-link" href="reports.html"><i class="bi bi-graph-up-arrow" aria-hidden="true"></i><span>Project Cost Report</span></a>
+  <a class="nav-link" href="performance.html"><i class="bi bi-speedometer2" aria-hidden="true"></i><span>Performance</span></a>
+<a class="nav-link" href="data.html"><i class="bi bi-shield-check" aria-hidden="true"></i><span>Data & Backup</span></a>
+  </nav>
+  <div class="sidebar-bottom">
+    
+    <div class="user"><span>MX</span><div><b>MontX Admin</b><small>Master workspace</small></div><i class="bi bi-three-dots" aria-hidden="true"></i></div>
+  </div>
+</aside>
+  <main class="main">
+    <header class="topbar"><button class="icon-btn mobile-menu" id="menuToggle" aria-label="Open menu"><i class="bi bi-list"></i></button><div class="crumb">Workspace <i class="bi bi-chevron-right"></i> <b>Inventory</b></div><div class="top-actions"><span class="live"><i></i> SYSTEM LIVE</span><button class="icon-btn" id="themeToggle" aria-label="Toggle theme"><i class="bi bi-moon-stars"></i></button></div></header>
+    <div class="page-head"><div><div class="eyebrow">MATERIAL CONTROL</div><h1>Inventory<span>.</span></h1><p>Manage godown and site stock, record movements, and correct location quantities.</p></div><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#itemModal" id="addItem"><i class="bi bi-plus-lg"></i> Add material</button></div>
+    <section class="metrics">
+      <article class="metric glass"><div class="metric-head">Materials</div><strong id="itemCount">0</strong><small>In material catalogue</small></article>
+      <article class="metric glass"><div class="metric-head">Total stock quantity</div><strong id="stockCount">0</strong><small>Across all locations</small></article>
+      <article class="metric glass"><div class="metric-head">Main godown stock</div><strong id="godownCount">0</strong><small>Combined units</small></article>
+      <article class="metric glass"><div class="metric-head">Low stock items</div><strong id="lowCount">0</strong><small>At or below threshold</small></article>
+    </section>
+    <div class="inventory-toolbar">
+      <input class="form-control search-field" type="search" id="search" placeholder="Search material name..." aria-label="Search material">
+      <select class="form-select" id="siteFilter" aria-label="Filter location"><option value="all">All locations</option><option value="godown">Main Godown</option></select>
+      <input class="form-control" type="date" id="dateFrom" aria-label="Movement date from" title="Movement date from">
+      <input class="form-control" type="date" id="dateTo" aria-label="Movement date to" title="Movement date to">
+      <button class="btn btn-outline-soft" id="clearFilters" type="button"><i class="bi bi-x-circle"></i> Clear</button>
+    </div>
+    <section class="glass inventory-panel">
+      <div class="panel-heading"><div><h2 class="section-title">Material stock by location</h2><p class="section-subtitle">Click the pencil beside any quantity to edit that material's stock at the selected location.</p></div><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#moveModal"><i class="bi bi-arrow-left-right"></i> Stock movement</button></div>
+      <div class="table-wrap"><table class="inventory-table"><thead><tr><th>Material</th><th>Unit</th><th>Main godown</th><th>Site stock details</th><th>Total</th><th>Stock status</th><th>Action</th></tr></thead><tbody id="stockRows"></tbody></table></div>
+    </section>
+    <section class="glass inventory-panel">
+      <div class="panel-heading"><div><h2 class="section-title">Stock movement history</h2><p class="section-subtitle" id="movementSummary">Showing the latest stock movements.</p></div><span class="muted-note">Date filters above apply here</span></div>
+      <div class="table-wrap"><table class="inventory-table"><thead><tr><th>Date</th><th>Material</th><th>Movement</th><th>From</th><th>To</th><th>Quantity</th><th>Notes</th></tr></thead><tbody id="movementRows"></tbody></table></div>
+    </section>
+    <footer>© 2026 MontX Construction Management <span>Browser-local inventory prototype</span></footer>
+  </main>
+</div>
+
+<div class="modal fade" id="itemModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form id="itemForm"><div class="modal-header"><h5 class="modal-title" id="itemModalTitle">Add material</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body row g-3"><div class="col-12"><label class="form-label" for="itemName">Material name *</label><input class="form-control" id="itemName" required maxlength="80" placeholder="e.g. Teka, Chavi, Lazer"></div><div class="col-6"><label class="form-label" for="itemUnit">Unit *</label><select class="form-select" id="itemUnit"><option>Nos</option><option>Set</option><option>Pair</option><option>Bag</option><option>Kg</option><option>Ton</option><option>Meter</option><option>Sq.ft</option><option>Other</option></select></div><div class="col-6"><label class="form-label" for="itemMin">Low stock threshold</label><input class="form-control" type="number" id="itemMin" min="0" step=".01" value="0"></div></div><div class="modal-footer"><button type="button" class="btn btn-outline-soft" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary">Save material</button></div></form></div></div></div>
+
+<div class="modal fade" id="moveModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form id="moveForm"><div class="modal-header"><h5 class="modal-title">Stock movement</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body row g-3"><div class="col-6"><label class="form-label" for="moveDate">Date *</label><input type="date" class="form-control" id="moveDate" required></div><div class="col-6"><label class="form-label" for="moveType">Movement *</label><select class="form-select" id="moveType"><option value="receipt">Purchase / Receive</option><option value="issue">Issue / Consume</option><option value="transfer">Site-to-site transfer</option></select></div><div class="col-12"><label class="form-label" for="moveItem">Material *</label><select class="form-select" id="moveItem" required></select></div><div class="col-6"><label class="form-label" for="moveFrom">From location</label><select class="form-select" id="moveFrom"></select></div><div class="col-6"><label class="form-label" for="moveTo">To location</label><select class="form-select" id="moveTo"></select></div><div class="col-6"><label class="form-label" for="moveQty">Quantity *</label><input type="number" min=".01" step=".01" class="form-control" id="moveQty" required></div><div class="col-6"><label class="form-label" for="moveNotes">Reference / notes</label><input class="form-control" id="moveNotes" maxlength="180"></div><div class="col-12 muted-note">Receipts add stock to the destination. Issues subtract from the source. Transfers deduct from one location and add the same quantity to another. Stock cannot go negative.</div></div><div class="modal-footer"><button type="button" class="btn btn-outline-soft" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary">Save movement</button></div></form></div></div></div>
+
+<div class="modal fade" id="adjustModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form id="adjustForm"><div class="modal-header"><h5 class="modal-title">Edit material stock</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body row g-3"><input type="hidden" id="adjustItemId"><input type="hidden" id="adjustLocationId"><div class="col-12"><div class="muted-note">Material</div><strong id="adjustMaterialName">-</strong><div class="muted-note mt-2">Location</div><strong id="adjustLocationName">-</strong></div><div class="col-6"><label class="form-label" for="adjustCurrent">Current quantity</label><input class="form-control" id="adjustCurrent" readonly></div><div class="col-6"><label class="form-label" for="adjustNew">Correct quantity *</label><input class="form-control" type="number" id="adjustNew" min="0" step=".01" required></div><div class="col-6"><label class="form-label" for="adjustDate">Adjustment date *</label><input class="form-control" type="date" id="adjustDate" required></div><div class="col-6"><label class="form-label" for="adjustReason">Reason / notes *</label><input class="form-control" id="adjustReason" maxlength="180" required placeholder="Physical stock correction"></div><div class="col-12 muted-note">This saves a stock adjustment in the movement history. It does not erase previous entries.</div></div><div class="modal-footer"><button type="button" class="btn btn-outline-soft" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary">Save adjustment</button></div></form></div></div></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script><script src="assets/js/custom-select.js?v=2"></script><script src="assets/js/app.js"></script><script src="assets/js/inventory.js"></script>
+</body></html>

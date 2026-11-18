@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MontX | Project Cost Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<link href="assets/css/style.css" rel="stylesheet">
+<style>
+	.page-head{display:flex;justify-content:space-between;align-items:end;gap:16px;margin:32px 0 22px}.page-head h1{margin:8px 0 4px}.page-head p{font-size:12px;color:var(--text-muted);margin:0}
+	.report-tools{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin:18px 0}.report-tools>*{min-width:145px}
+	.report-tools .form-control,.report-tools .form-select{background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);font-size:12px;border-radius:11px;min-height:42px}
+	.report-tools .form-control:focus,.report-tools .form-select:focus{background:var(--bg-secondary);color:var(--text-primary);border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light)}
+	.report-tools .form-select option{color:var(--text-primary)}
+	.report-panel{padding:19px;margin-bottom:15px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:16px}
+	.table-wrap{width:100%;overflow:auto}
+	.data-table{width:100%;min-width:680px;border-collapse:collapse}
+	.data-table th,.data-table td{padding:12px 10px;border-bottom:1px solid var(--border);font-size:10px;vertical-align:middle}
+	.data-table th{color:var(--text-muted);font-size:8px;letter-spacing:.9px;text-transform:uppercase;white-space:nowrap;background:var(--bg-tertiary)}
+	.data-table td{color:var(--text-secondary)}
+	.report-note{padding:12px 14px;border:1px solid var(--border);background:var(--bg-tertiary);border-radius:12px;color:var(--text-muted);font-size:10px;line-height:1.6;margin:0 0 14px}
+	.category-row{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);font-size:10px}
+	.category-row:last-child{border:0}
+	.category-row span{color:var(--text-muted)}
+	.empty-state{text-align:center;padding:30px!important;color:var(--text-muted)!important}
+	.section-title{font-size:14px;font-weight:800;margin:0;color:var(--text-primary)}
+	.section-subtitle{font-size:10px;color:var(--text-muted);margin:4px 0 0}
+	.report-grid{display:grid;grid-template-columns:1.35fr 1fr;gap:14px}
+	.metrics{grid-template-columns:repeat(5,minmax(0,1fr))}
+	.money{font-weight:800;color:var(--text-primary)}
+	.negative-balance{color:var(--danger)!important}
+	.income-amount{color:var(--success)!important}
+	@media(max-width:1100px){.metrics{grid-template-columns:repeat(3,minmax(0,1fr))}}
+	@media(max-width:950px){.report-grid{grid-template-columns:1fr}}
+	@media(max-width:760px){.page-head{align-items:flex-start;flex-direction:column}.report-tools>*{flex:1;min-width:calc(50% - 9px)}.report-panel{padding:13px}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+</head>
+<body><div class="glow glow-a"></div><div class="glow glow-b"></div><div class="layout">
+<aside class="sidebar glass" id="sidebar">
+<a class="brand" href="index.html" aria-label="MontX home"><span class="brand-icon"><i class="bi bi-buildings" aria-hidden="true"></i></span><span><b>MontX</b><small>CONSTRUCTION MANAGEMENT</small></span></a>
+<div class="nav-label">WORKSPACE</div><nav class="nav flex-column" aria-label="Workspace navigation">
+<a class="nav-link" href="index.html"><i class="bi bi-grid-1x2" aria-hidden="true"></i><span>Overview</span></a>
+<a class="nav-link" href="sites.html"><i class="bi bi-building" aria-hidden="true"></i><span>Projects & Sites</span></a>
+<a class="nav-link" href="vendors.html"><i class="bi bi-people" aria-hidden="true"></i><span>Vendors</span></a>
+<a class="nav-link" href="attendance.html"><i class="bi bi-person-workspace" aria-hidden="true"></i><span>Labour & Attendance</span></a>
+<a class="nav-link" href="salary.html"><i class="bi bi-wallet2" aria-hidden="true"></i><span>Salary & Payments</span></a>
+<a class="nav-link" href="inventory.html"><i class="bi bi-box-seam" aria-hidden="true"></i><span>Inventory</span></a>
+<a class="nav-link" href="expenses.html"><i class="bi bi-receipt" aria-hidden="true"></i><span>Expenses</span></a>
+<a class="nav-link active" href="reports.html" aria-current="page"><i class="bi bi-graph-up-arrow" aria-hidden="true"></i><span>Project Cost Report</span></a>
+<a class="nav-link" href="performance.html"><i class="bi bi-speedometer2" aria-hidden="true"></i><span>Performance</span></a>
+<a class="nav-link" href="data.html"><i class="bi bi-shield-check" aria-hidden="true"></i><span>Data & Backup</span></a>
+  </nav><div class="sidebar-bottom"><div class="user"><span>MX</span><div><b>MontX Admin</b><small>Master workspace</small></div><i class="bi bi-three-dots" aria-hidden="true"></i></div></div>
+</aside>
+<main class="main"><header class="topbar"><button class="icon-btn mobile-menu" id="menuToggle" aria-label="Open navigation"><i class="bi bi-list"></i></button><div class="crumb">Workspace <i class="bi bi-chevron-right"></i> <b>Project Cost Report</b></div><div class="top-actions"><span class="live"><i></i> SYSTEM LIVE</span><button class="icon-btn" id="themeToggle" aria-label="Toggle theme"><i class="bi bi-moon-stars"></i></button><span class="mini-avatar">MX</span></div></header>
+<div class="page-head"><div><div class="eyebrow">FINANCIAL OVERVIEW <span></span> PROJECT COST</div><h1>Project Cost Report<span>.</span></h1><p>Track project costs, income received and the net financial balance.</p></div><button class="btn btn-primary" id="exportReport" type="button"><i class="bi bi-file-earmark-pdf me-1"></i> Print / Save PDF report</button></div>
+<div class="report-tools"><label class="d-flex align-items-center gap-2 mb-0" style="font-size:10px;color:var(--text-muted)">From <input class="form-control" type="date" id="dateFrom" aria-label="Report from date"></label><label class="d-flex align-items-center gap-2 mb-0" style="font-size:10px;color:var(--text-muted)">To <input class="form-control" type="date" id="dateTo" aria-label="Report to date"></label><select class="form-select" id="siteFilter" aria-label="Filter site"><option value="all">All sites</option><option value="__general">General / Office</option></select><button class="btn btn-outline-soft" id="clearReport" type="button">Reset range</button></div>
+<p class="report-note"><i class="bi bi-info-circle me-1"></i><b>Calculation:</b> Project cost = labour attendance earnings + recorded expenses. Net balance = income received − project cost. Salary withdrawals and salary payments are excluded because they settle labour already counted from attendance. Inventory quantities are not included in rupee totals because the current stock ledger has no material purchase-price valuation.</p>
+<section class="metrics"><article class="metric glass"><div class="metric-head">Total project cost</div><strong id="totalCost">₹0</strong><small>Labour + recorded expenses</small></article><article class="metric glass"><div class="metric-head">Total project income</div><strong id="totalIncome">₹0</strong><small>Income register receipts</small></article><article class="metric glass"><div class="metric-head">Net balance</div><strong id="netBalance">₹0</strong><small>Income minus project cost</small></article><article class="metric glass"><div class="metric-head">Labour cost</div><strong id="labourCost">₹0</strong><small>Saved attendance earnings</small></article><article class="metric glass"><div class="metric-head">Other expenses</div><strong id="otherCost">₹0</strong><small>Non-labour expense register</small></article></section>
+<div class="report-grid mt-3"><section class="glass report-panel"><div class="mb-3"><h2 class="section-title">Financial summary by site</h2><p class="section-subtitle" id="rangeLabel">Current month</p></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Site / Project</th><th>Labour cost</th><th>Other expenses</th><th>Income</th><th>Net balance</th></tr></thead><tbody id="siteCostRows"></tbody></table></div></section>
+<section class="glass report-panel"><div class="mb-3"><h2 class="section-title">Income & expense categories</h2><p class="section-subtitle">Received income and non-labour spending</p></div><h3 class="section-title" style="font-size:11px;margin-bottom:6px">Expense categories</h3><div id="categoryBreakdown"></div><h3 class="section-title mt-3 mb-2" style="font-size:11px">Income sources</h3><div id="incomeBreakdown"></div></section></div>
+<section class="glass report-panel mt-3"><div class="mb-3"><h2 class="section-title">Cost detail</h2><p class="section-subtitle">Attendance earnings, other expenses and income, listed separately</p></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Date</th><th>Type</th><th>Site</th><th>Category / Vendor</th><th>Description</th><th>Amount</th></tr></thead><tbody id="detailRows"></tbody></table></div></section>
+<footer>© 2026 MontX Construction Management <span><i class="bi bi-shield-check"></i> Saved in this browser</span></footer></main></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script><script src="assets/js/pdf-export.js"></script><script src="assets/js/custom-select.js?v=2"></script><script src="assets/js/app.js"></script><script src="assets/js/reports.js"></script>
+</body></html>
