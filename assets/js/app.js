@@ -85,66 +85,120 @@ if(canvas&&window.Chart){
   syncChartTheme();
 }
 
-// Lightweight local activity trail for changes made by MontX modules.
-(()=>{
-  const tracked={
-    'montx-sites-v1':'Sites','montx-vendors-v1':'Vendors','montx-attendance-v1':'Attendance',
-    'montx-salary-transactions-v1':'Salary & Payments','montx-inventory-items-v1':'Inventory materials',
-    'montx-inventory-movements-v1':'Inventory movements','montx-expenses-v1':'Income & Expenses'
-  };
-  const nativeSet=Storage.prototype.setItem;
-  if(Storage.prototype.__montxAuditWrapped)return;
-  Storage.prototype.setItem=function(key,value){
-    const old=this.getItem(key),result=nativeSet.call(this,key,value);
-    if(this!==localStorage||!tracked[key]||window.MONTX_RESTORING)return result;
-    try{
-      const before=old?JSON.parse(old):[],after=JSON.parse(value);
-      if(!Array.isArray(before)||!Array.isArray(after)||old===value)return result;
-      const signature=x=>x&&typeof x==='object'?(x.id!=null?String(x.id):JSON.stringify(x)):String(x);
-      const b=new Set(before.map(signature)),a=new Set(after.map(signature));
-      const added=[...a].filter(x=>!b.has(x)).length,removed=[...b].filter(x=>!a.has(x)).length;
-      const action=added&&removed?'Records changed':added?'Record added':removed?'Record deleted':'Record updated';
-      const detail=added||removed?`${added} added, ${removed} deleted (${after.length} total)`:`${after.length} records in module`;
-      const log=JSON.parse(localStorage.getItem('montx-activity-v1')||'[]');
-      log.push({id:`act-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,at:new Date().toISOString(),action,module:tracked[key],detail});
-      nativeSet.call(localStorage,'montx-activity-v1',JSON.stringify(log.slice(-300)));
-    }catch(e){}
+// =========================================================================
+// Google Sheets Two-Way Auto-Sync + Activity Trail for ALL MontX Modules
+// =========================================================================
+const GAS_WEB_APP_URL = "PASTE_YOUR_WEB_APP_URL_HERE";
+
+const MONTX_SHEET_MODULES = {
+  'montx-sites-v1': 'Sites',
+  'montx-vendors-v1': 'Vendors',
+  'montx-attendance-v1': 'Attendance',
+  'montx-salary-transactions-v1': 'Salary & Payments',
+  'montx-inventory-items-v1': 'Inventory materials',
+  'montx-inventory-movements-v1': 'Inventory movements',
+  'montx-expenses-v1': 'Income & Expenses'
+};
+
+const syncTimers = {};
+
+function syncModuleToGoogleSheet(sheetName, rowsArray) {
+  if (!GAS_WEB_APP_URL || GAS_WEB_APP_URL.includes("PASTE_YOUR")) return;
+
+  // Debounce rapid saves (400ms) so bulk actions send one clean request
+  clearTimeout(syncTimers[sheetName]);
+  syncTimers[sheetName] = setTimeout(async () => {
+    const payload = new URLSearchParams();
+    payload.append("sheetName", sheetName);
+    payload.append("rows", JSON.stringify(rowsArray));
+
+    try {
+      const response = await fetch(GAS_WEB_APP_URL, {
+        method: "POST",
+        body: payload
+      });
+      const result = await response.text();
+      if (result === "Success") {
+        console.log(`[MontX Sync] Saved "${sheetName}" (${rowsArray.length} rows)`);
+      } else {
+        console.error(`[MontX Sync] Error saving "${sheetName}":`, result);
+      }
+    } catch (error) {
+      console.error(`[MontX Sync] Network error saving "${sheetName}":`, error);
+    }
+  }, 400);
+}
+
+// Intercept all localStorage saves across every MontX page
+(() => {
+  const nativeSet = Storage.prototype.setItem;
+  if (Storage.prototype.__montxAuditWrapped) return;
+
+  Storage.prototype.setItem = function(key, value) {
+    const old = this.getItem(key);
+    const result = nativeSet.call(this, key, value);
+    if (this !== localStorage || !MONTX_SHEET_MODULES[key] || window.MONTX_RESTORING) return result;
+
+    try {
+      const before = old ? JSON.parse(old) : [];
+      const after = JSON.parse(value);
+      if (!Array.isArray(before) || !Array.isArray(after) || old === value) return result;
+
+      // 1. Auto-save updated module data to its Google Sheet tab
+      syncModuleToGoogleSheet(MONTX_SHEET_MODULES[key], after);
+
+      // 2. Keep original local activity trail
+      const signature = x => x && typeof x === 'object' ? (x.id != null ? String(x.id) : JSON.stringify(x)) : String(x);
+      const b = new Set(before.map(signature)), a = new Set(after.map(signature));
+      const added = [...a].filter(x => !b.has(x)).length, removed = [...b].filter(x => !a.has(x)).length;
+      const action = added && removed ? 'Records changed' : added ? 'Record added' : removed ? 'Record deleted' : 'Record updated';
+      const detail = added || removed ? `${added} added, ${removed} deleted (${after.length} total)` : `${after.length} records in module`;
+      const log = JSON.parse(localStorage.getItem('montx-activity-v1') || '[]');
+      log.push({ id: `act-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, at: new Date().toISOString(), action, module: MONTX_SHEET_MODULES[key], detail });
+      nativeSet.call(localStorage, 'montx-activity-v1', JSON.stringify(log.slice(-300)));
+    } catch (e) {}
+
     return result;
   };
-  Storage.prototype.__montxAuditWrapped=true;
+  Storage.prototype.__montxAuditWrapped = true;
 })();
 
-// Add to MontX_Construction_Management/assets/js/app.js
-
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwc3D-caAWX98wX4GUKypNBzOUP_4lO3e8T_ZM782bU9J5Q1VLlrdyVcBZrga3SPOWenQ/exec";
-
-/**
- * Sends an array of data to a specific Google Sheet tab.
- * @param {string} tabName - The name of the Google Sheet tab (e.g., "Attendance", "Materials")
- * @param {Array} rowValues - Array of data matching your columns (e.g., [date, name, status])
- */
-async function sendToGoogleSheet(tabName, rowValues) {
-  // Using URLSearchParams avoids complex CORS preflight issues on static hosts like GitHub Pages
-  const payload = new URLSearchParams();
-  payload.append("sheetName", tabName);
-  payload.append("rowData", JSON.stringify(rowValues));
+// Auto-load all previous data from Google Sheets when the website opens
+async function loadAllFromGoogleSheets() {
+  if (!GAS_WEB_APP_URL || GAS_WEB_APP_URL.includes("PASTE_YOUR")) return;
 
   try {
-    const response = await fetch(GAS_WEB_APP_URL, {
-      method: "POST",
-      body: payload
-    });
-    
-    const result = await response.text();
-    if (result === "Success") {
-      console.log(`Data saved to ${tabName} successfully.`);
-      return true;
+    const response = await fetch(`${GAS_WEB_APP_URL}?action=loadAll`);
+    const cloudData = await response.json();
+    if (!cloudData || typeof cloudData !== 'object' || cloudData.error) return;
+
+    let hasUpdates = false;
+    window.MONTX_RESTORING = true;
+
+    for (const [storageKey, sheetName] of Object.entries(MONTX_SHEET_MODULES)) {
+      if (Array.isArray(cloudData[sheetName])) {
+        const incomingJson = JSON.stringify(cloudData[sheetName]);
+        const currentJson = localStorage.getItem(storageKey);
+        if (incomingJson !== currentJson) {
+          localStorage.setItem(storageKey, incomingJson);
+          hasUpdates = true;
+        }
+      }
+    }
+
+    window.MONTX_RESTORING = false;
+
+    // Reload once if fresh data arrived from Google Sheets so the current page renders it
+    if (hasUpdates && !sessionStorage.getItem('montx-reloaded-after-sync')) {
+      sessionStorage.setItem('montx-reloaded-after-sync', '1');
+      location.reload();
     } else {
-      console.error("Apps Script Error:", result);
-      return false;
+      sessionStorage.removeItem('montx-reloaded-after-sync');
     }
   } catch (error) {
-    console.error("Network or Fetch Error:", error);
-    return false;
+    window.MONTX_RESTORING = false;
+    console.warn('[MontX Sync] Offline or failed to load from Google Sheets:', error);
   }
 }
+
+document.addEventListener('DOMContentLoaded', loadAllFromGoogleSheets);
