@@ -492,6 +492,7 @@ window.MontXVerifyPin = async function(storedPin, inputPin) {
 
     const itemStyle = 'width:100%;display:flex;align-items:center;gap:9px;padding:9px 11px;border:0;border-radius:8px;background:transparent;color:var(--text-primary,#f8fafc);font-size:12px;font-weight:500;cursor:pointer;text-align:left;';
     menu.innerHTML = `
+      <button type="button" id="mxMenuProfile" style="${itemStyle}"><i class="bi bi-person-circle"></i><span>Manage Profile</span></button>
       ${user.role === 'super_admin' ? `<button type="button" id="mxMenuManageUsers" style="${itemStyle}"><i class="bi bi-people"></i><span>Manage Users</span></button>` : ''}
       <button type="button" id="mxMenuUpdatePwd" style="${itemStyle}"><i class="bi bi-key"></i><span>Update Password</span></button>
       <div style="height:1px;background:var(--border,#334155);margin:4px 0;"></div>
