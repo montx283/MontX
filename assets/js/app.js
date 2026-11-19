@@ -378,7 +378,7 @@ window.MontXVerifyPin = async function(storedPin, inputPin) {
       msg.style.color = ok ? '#16a34a' : '#ef4444';
     };
 
-    document.getElementById('updatePwdForm').onsubmit = e => {
+    document.getElementById('updatePwdForm').onsubmit = async e => {
       e.preventDefault();
       const cur = document.getElementById('curPin').value.trim();
       const nw = document.getElementById('newPin').value.trim();
@@ -387,11 +387,13 @@ window.MontXVerifyPin = async function(storedPin, inputPin) {
       if (nw !== cnf) return show('New passwords do not match.');
       const users = readUsers();
       const target = users.find(u => String(u.username || '').toLowerCase() === String(currentUser.username || '').toLowerCase());
-      if (!target || String(target.pin || '') !== cur) return show('Current password is incorrect.');
+      if (!target || !(await window.MontXVerifyPin(target.pin, cur))) {
+        return show('Current password is incorrect.');
+      }
 
-      target.pin = nw;
+      target.pin = await window.MontXHashPin(nw);
       saveUsers(users);
-      show('Password updated successfully!', true);
+      show('Password updated & encrypted!', true);
       setTimeout(() => overlay.remove(), 1100);
     };
   }
