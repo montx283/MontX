@@ -62,11 +62,55 @@
   const waBtn = document.getElementById('sendWhatsappPdf');
   if (!exportBtn || !waBtn) return;
 
-  const syncState = () => { waBtn.disabled = exportBtn.disabled; };
-  syncState();
-  new MutationObserver(syncState).observe(exportBtn, { attributes: true, attributeFilter: ['disabled'] });
+  const defaultLabel = '<i class="bi bi-whatsapp me-1"></i> Send PDF to Vendor';
+  let pendingShare = null;
+
+  const resetPending = () => {
+    pendingShare = null;
+    waBtn.innerHTML = defaultLabel;
+    waBtn.disabled = exportBtn.disabled;
+  };
+
+  resetPending();
+  new MutationObserver(() => {
+    if (!pendingShare) waBtn.disabled = exportBtn.disabled;
+  }).observe(exportBtn, { attributes: true, attributeFilter: ['disabled'] });
+
+  ['month', 'site', 'vendor'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', resetPending);
+  });
+
+  function base64ToPdfFile(base64, filename) {
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return new File([bytes], filename, { type: 'application/pdf' });
+  }
+
+  function downloadFile(file) {
+    const url = URL.createObjectURL(file);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = file.name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  }
 
   waBtn.addEventListener('click', async () => {
+    // If mobile Safari required a second tap after async PDF generation, share immediately
+    if (pendingShare) {
+      const { file, msg } = pendingShare;
+      resetPending();
+      try {
+        await navigator.share({ files: [file], title: file.name, text: msg });
+      } catch (err) {
+        if (err?.name !== 'AbortError') downloadFile(file);
+      }
+      return;
+    }
+
     const statement = typeof window.MontXGetStatement === 'function' ? window.MontXGetStatement() : null;
     if (!statement) return;
 
@@ -84,11 +128,8 @@
     let phone = String(rawPhone).replace(/\D/g, '');
     if (phone.length === 10) phone = '91' + phone;
 
-    const origText = waBtn.innerHTML;
     waBtn.disabled = true;
-    waBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Generating PDF...';
-
-    const waWin = window.open('', '_blank');
+    waBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Preparing PDF...';
 
     try {
       const safe = [vendorName, siteName, monthVal].join('_').replace(/[^a-z0-9_-]+/gi, '_');
@@ -107,8 +148,9 @@
 
       const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: payload });
       const data = await res.json();
+      if (!data.ok || !data.base64) throw new Error('Could not generate PDF');
 
-      if (!data.ok || !data.url) throw new Error('Could not create PDF link');
+      const pdfFile = base64ToPdfFile(data.base64, data.filename || `MontX_Hisab_${safe}.pdf`);
 
       const gross = document.getElementById('gross')?.textContent?.trim() || '₹0';
       const withdrawals = document.getElementById('withdrawals')?.textContent?.trim() || '₹0';
@@ -123,18 +165,35 @@
         `• Withdrawals: ${withdrawals}\n` +
         `• Payments Made: ${payments}\n` +
         `• Outstanding Balance: ${balance}\n\n` +
-        `Download Hisab PDF:\n${data.url}`;
+        `Please find the attached Hisab PDF.`;
 
-      const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
-      if (waWin) waWin.location.href = waUrl;
-      else window.location.href = waUrl;
+      // Mobile: share the actual PDF file directly to WhatsApp
+      if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+        try {
+          await navigator.share({ files: [pdfFile], title: pdfFile.name, text: msg });
+          resetPending();
+          return;
+        } catch (shareErr) {
+          if (shareErr?.name === 'AbortError') {
+            resetPending();
+            return;
+          }
+          // iPhone/Safari blocks share after a slow fetch; hold file for 1 instant tap
+          pendingShare = { file: pdfFile, msg };
+          waBtn.disabled = false;
+          waBtn.innerHTML = '<i class="bi bi-send me-1"></i> Tap to Share PDF';
+          return;
+        }
+      }
+
+      // Desktop PC: download the actual PDF file directly + open vendor's WhatsApp chat
+      downloadFile(pdfFile);
+      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+      resetPending();
     } catch (err) {
-      if (waWin) waWin.close();
       console.error(err);
-      alert('Failed to generate PDF link. Please check your Apps Script deployment.');
-    } finally {
-      waBtn.innerHTML = origText;
-      syncState();
+      alert('Failed to generate PDF. Make sure you redeployed Apps Script as a New Version.');
+      resetPending();
     }
   });
 })();
