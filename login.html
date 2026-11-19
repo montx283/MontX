@@ -120,7 +120,7 @@
     });
 
     const msgBox = document.getElementById('authMsg');
-    document.getElementById('loginForm').addEventListener('submit', e => {
+    document.getElementById('loginForm').addEventListener('submit', async e => {
       e.preventDefault();
       msgBox.style.display = 'none';
 
@@ -128,17 +128,30 @@
       const username = document.getElementById('loginUser').value.trim().toLowerCase();
       const pin = document.getElementById('loginPin').value.trim();
 
-      const user = getUsers().find(u =>
-        String(u.username || '').toLowerCase() === username &&
-        String(u.pin || '') === pin &&
-        u.role === role
-      );
+      const users = getUsers();
+      let user = null;
+      for (const u of users) {
+        if (
+          String(u.username || '').toLowerCase() === username &&
+          u.role === role &&
+          (await window.MontXVerifyPin(u.pin, pin))
+        ) {
+          user = u;
+          break;
+        }
+      }
 
       if (!user) {
         msgBox.textContent = 'Invalid username, password, or selected role.';
         msgBox.className = 'auth-msg err';
         msgBox.style.display = 'block';
         return;
+      }
+
+      // Auto-upgrade old plain-text PIN to SHA-256 hash on login
+      if (!String(user.pin || '').startsWith('sha256:')) {
+        user.pin = await window.MontXHashPin(pin);
+        localStorage.setItem(USERS_KEY, JSON.stringify(users));
       }
 
       sessionStorage.setItem(AUTH_KEY, JSON.stringify({
