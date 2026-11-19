@@ -204,6 +204,24 @@ async function loadAllFromGoogleSheets() {
 
 document.addEventListener('DOMContentLoaded', loadAllFromGoogleSheets);
 
+// SHA-256 PIN/Password hashing helper (shared across login, signup, and app.js)
+window.MontXHashPin = async function(pin) {
+  const raw = String(pin ?? '').trim();
+  if (raw.startsWith('sha256:')) return raw;
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('montx-salt:' + raw));
+  const hex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  return 'sha256:' + hex;
+};
+
+window.MontXVerifyPin = async function(storedPin, inputPin) {
+  const stored = String(storedPin ?? '');
+  const input = String(inputPin ?? '').trim();
+  if (stored.startsWith('sha256:')) {
+    return (await window.MontXHashPin(input)) === stored;
+  }
+  return stored === input; // Backward compatibility for older plain-text PINs
+};
+
 // =========================================================================
 // MontX Role-Based Access Control + 3-Dot User Menu (Manage Users, Password, Logout)
 // =========================================================================
