@@ -335,6 +335,82 @@ window.MontXVerifyPin = async function(storedPin, inputPin) {
     }
     renderUsers();
   }
+  // 1b. Manage Profile Modal (Edit Name & Username)
+  function openManageProfileModal(currentUser) {
+    document.getElementById('montxProfileOverlay')?.remove();
+    const users = readUsers();
+    const target = users.find(u => String(u.username || '').toLowerCase() === String(currentUser.username || '').toLowerCase());
+
+    const overlay = document.createElement('div');
+    overlay.id = 'montxProfileOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:1050;background:rgba(15,23,42,.72);display:flex;align-items:center;justify-content:center;padding:16px;font-family:Inter,sans-serif;';
+    overlay.innerHTML = `
+      <div style="width:100%;max-width:390px;background:var(--bg-secondary,#1e293b);border:1px solid var(--border,#334155);border-radius:16px;padding:22px;color:var(--text-primary,#fff);box-shadow:0 20px 50px rgba(0,0,0,.4);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <h5 style="margin:0;font-weight:700;font-size:16px;">Manage Profile</h5>
+          <button id="closeProfileModal" type="button" style="border:0;background:transparent;color:var(--text-muted,#94a3b8);font-size:20px;cursor:pointer;">&times;</button>
+        </div>
+        <div id="profileMsg" style="display:none;font-size:12px;padding:8px 10px;border-radius:8px;margin-bottom:12px;"></div>
+        <form id="updateProfileForm" style="display:flex;flex-direction:column;gap:11px;">
+          <div>
+            <label style="display:block;font-size:11px;font-weight:600;color:var(--text-secondary,#cbd5e1);margin-bottom:4px;">Full Name</label>
+            <input id="profName" type="text" required value="${(target?.name || currentUser.label || '').replace(/"/g, '&quot;')}" style="width:100%;height:38px;padding:0 12px;border-radius:9px;border:1px solid var(--border,#334155);background:var(--bg-primary,#0f172a);color:var(--text-primary,#fff);font-size:13px;box-sizing:border-box;">
+          </div>
+          <div>
+            <label style="display:block;font-size:11px;font-weight:600;color:var(--text-secondary,#cbd5e1);margin-bottom:4px;">Username</label>
+            <input id="profUser" type="text" required value="${(target?.username || currentUser.username || '').replace(/"/g, '&quot;')}" style="width:100%;height:38px;padding:0 12px;border-radius:9px;border:1px solid var(--border,#334155);background:var(--bg-primary,#0f172a);color:var(--text-primary,#fff);font-size:13px;box-sizing:border-box;">
+          </div>
+          <button type="submit" style="margin-top:4px;height:40px;border:0;border-radius:9px;background:var(--accent,#2563EB);color:#fff;font-weight:600;font-size:13px;cursor:pointer;">Save Profile</button>
+        </form>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    document.getElementById('closeProfileModal').onclick = () => overlay.remove();
+    overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+
+    const msg = document.getElementById('profileMsg');
+    const show = (text, ok = false) => {
+      msg.textContent = text;
+      msg.style.display = 'block';
+      msg.style.background = ok ? 'rgba(22,163,74,.14)' : 'rgba(239,68,68,.14)';
+      msg.style.color = ok ? '#16a34a' : '#ef4444';
+    };
+
+    document.getElementById('updateProfileForm').onsubmit = e => {
+      e.preventDefault();
+      const newName = document.getElementById('profName').value.trim();
+      const newUsername = document.getElementById('profUser').value.trim().toLowerCase();
+
+      if (!newName || !newUsername) return show('Name and username are required.');
+
+      const list = readUsers();
+      const idx = list.findIndex(u => String(u.username || '').toLowerCase() === String(currentUser.username || '').toLowerCase());
+      if (idx === -1) return show('User account not found.');
+
+      const duplicate = list.some((u, i) => i !== idx && String(u.username || '').toLowerCase() === newUsername);
+      if (duplicate) return show('That username is already taken.');
+
+      list[idx].name = newName;
+      list[idx].username = newUsername;
+      saveUsers(list);
+
+      // Update active session & sidebar display immediately
+      currentUser.username = newUsername;
+      currentUser.label = newName;
+      sessionStorage.setItem(AUTH_KEY, JSON.stringify(currentUser));
+
+      const userBox = document.querySelector('.sidebar-bottom .user');
+      if (userBox) {
+        const b = userBox.querySelector('b');
+        const small = userBox.querySelector('small');
+        if (b) b.textContent = newName;
+        if (small) small.textContent = `@${newUsername}`;
+      }
+
+      show('Profile updated!', true);
+      setTimeout(() => overlay.remove(), 900);
+    };
+  }
 
   // 2. Update Password Modal (All Users)
   function openUpdatePasswordModal(currentUser) {
