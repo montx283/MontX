@@ -1,20 +1,29 @@
 /*
- * MontX PDF export: use the browser's native print engine instead of html2pdf/html2canvas.
- * The user selects "Save as PDF" in the print dialog. This avoids canvas rendering,
- * cross-origin CDN dependencies and blank-canvas failures.
+ * MontX PDF export: native browser print engine with automatic iframe fallback
+ * (works even when popup blockers block window.open on desktop or mobile).
  */
-(()=>{'use strict';
-  const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-  const safeName=value=>String(value||'MontX_Report').replace(/\.pdf$/i,'').replace(/[\\/:*?"<>|]+/g,'_').replace(/\s+/g,' ').trim()||'MontX_Report';
+(() => {
+  'use strict';
 
-  function buildDocument({filename,title,subtitle='',content='',footer='MontX Construction Management',showHeader=true}={}){
-    const docTitle=safeName(filename||title||'MontX_Report');
-    const header=showHeader?`
+  const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[ch]));
+
+  const safeName = value => String(value || 'MontX_Report')
+    .replace(/\.pdf$/i, '')
+    .replace(/[\\/:*?"<>|]+/g, '_')
+    .replace(/\s+/g, ' ')
+    .trim() || 'MontX_Report';
+
+  function buildDocument({ filename, title, subtitle = '', content = '', footer = 'MontX Construction Management', showHeader = true } = {}) {
+    const docTitle = safeName(filename || title || 'MontX_Report');
+    const header = showHeader ? `
       <header class="report-header">
         <div class="brand-kicker">MONTX · CONSTRUCTION MANAGEMENT</div>
-        <h1>${esc(title||'Report')}</h1>
-        ${subtitle?`<p class="report-subtitle">${esc(subtitle)}</p>`:''}
-      </header>`:'';
+        <h1>${esc(title || 'Report')}</h1>
+        ${subtitle ? `<p class="report-subtitle">${esc(subtitle)}</p>` : ''}
+      </header>` : '';
+
     return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(docTitle)}</title>
@@ -24,7 +33,6 @@
   html,body{margin:0;padding:0;background:#fff;color:#1f2937;font-family:Arial,Helvetica,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   body{font-size:11px;line-height:1.45}
   .screen-note{max-width:190mm;margin:14px auto;padding:10px 13px;border:1px solid #c7d2fe;border-radius:8px;background:#eef2ff;color:#3730a3;font-size:12px}
-  /* A4-safe content width: never allow report blocks to run to the physical page edge. */
   .paper{width:100%;max-width:188mm;margin:0 auto;padding:0 1mm;background:#fff;min-width:0}
   .report-content{width:100%;max-width:100%;min-width:0;overflow-wrap:anywhere}
   .report-header{padding-bottom:14px;margin-bottom:18px;border-bottom:1px solid #e5e7eb;max-width:100%}
@@ -68,7 +76,6 @@
   @media print{
     html,body{width:100%!important;min-width:0!important;margin:0!important;padding:0!important;background:#fff!important}
     .screen-note{display:none!important}
-    /* Keep the 188mm cap even when the browser print dialog is set to zero margins. */
     .paper{width:100%!important;max-width:188mm!important;margin:0 auto!important;padding:0 1mm!important;min-width:0!important}
     .report-content{width:100%!important;max-width:100%!important;min-width:0!important}
     a{color:inherit;text-decoration:none}
@@ -79,48 +86,84 @@
   }
 </style></head><body>
   <div class="screen-note"><strong>PDF ready.</strong> In the print dialog choose <strong>Save as PDF</strong> as the destination, then click Save. Paper size: A4. If the print dialog did not open, use this button or press Ctrl+P. <button class="print-now" id="printNow" type="button">Print / Save PDF</button></div>
-  <main class="paper">${header}<section class="report-content">${content||'<p>No report details were supplied.</p>'}</section>
+  <main class="paper">${header}<section class="report-content">${content || '<p>No report details were supplied.</p>'}</section>
     <footer class="report-footer"><span>${esc(footer)}</span><span>Generated on ${esc(new Date().toLocaleDateString('en-IN'))}</span></footer>
   </main>
   <script>document.getElementById("printNow").addEventListener("click",()=>window.print());<\/script>
 </body></html>`;
   }
 
-  function download(options={}){
-    // Open synchronously during the original button click to avoid popup blockers.
-    const printWindow=window.open('about:blank','_blank');
-    if(!printWindow){
-      alert('MontX could not open the PDF print window. Please allow pop-ups for this site (127.0.0.1) and click the PDF button again.');
-      return false;
+  function printViaIframe(html) {
+    const oldFrame = document.getElementById('montx-print-frame');
+    if (oldFrame) oldFrame.remove();
+
+    const iframe = document.createElement('iframe');
+    iframe.id = 'montx-print-frame';
+    iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;';
+    document.body.appendChild(iframe);
+
+    const win = iframe.contentWindow;
+    const doc = win.document;
+    doc.open();
+    doc.write(html);
+    doc.close();
+
+    setTimeout(() => {
+      try {
+        win.focus();
+        win.print();
+      } catch (err) {
+        console.error('MontX iframe print failed:', err);
+        alert('Could not open print dialog. Please press Ctrl+P to save as PDF.');
+      }
+      setTimeout(() => iframe.remove(), 60000);
+    }, 250);
+
+    return true;
+  }
+
+  function download(options = {}) {
+    const html = buildDocument(options);
+
+    // Try opening a new print tab first
+    const printWindow = window.open('about:blank', '_blank');
+
+    // If popup blocker blocked window.open, print cleanly via hidden iframe instead
+    if (!printWindow) {
+      return printViaIframe(html);
     }
-    try{
-      const html=buildDocument(options);
+
+    try {
       printWindow.document.open();
       printWindow.document.write(html);
       printWindow.document.close();
-      let started=false;
-      const beginPrint=()=>{
-        if(started||printWindow.closed)return;
-        started=true;
+
+      let started = false;
+      const beginPrint = () => {
+        if (started || printWindow.closed) return;
+        started = true;
         printWindow.focus();
-        // Give the browser one layout frame before opening its native print dialog.
-        printWindow.requestAnimationFrame(()=>printWindow.requestAnimationFrame(()=>{
-          try{printWindow.print();}
-          catch(error){console.error('MontX native print failed:',error);alert('The print dialog could not be opened. Use Ctrl+P in the new report tab.');}
+        printWindow.requestAnimationFrame(() => printWindow.requestAnimationFrame(() => {
+          try {
+            printWindow.print();
+          } catch (error) {
+            console.error('MontX native print failed:', error);
+            alert('The print dialog could not be opened. Use Ctrl+P in the new report tab.');
+          }
         }));
       };
-      if(printWindow.document.readyState==='complete')setTimeout(beginPrint,150);
-      else printWindow.addEventListener('load',()=>setTimeout(beginPrint,150),{once:true});
-      // Safety fallback for browsers that do not fire the about:blank load event after document.write.
-      setTimeout(()=>{if(!started&&!printWindow.closed)beginPrint();},700);
+
+      if (printWindow.document.readyState === 'complete') setTimeout(beginPrint, 150);
+      else printWindow.addEventListener('load', () => setTimeout(beginPrint, 150), { once: true });
+
+      setTimeout(() => { if (!started && !printWindow.closed) beginPrint(); }, 700);
       return true;
-    }catch(error){
-      console.error('MontX print export failed:',error);
-      try{printWindow.close()}catch{}
-      alert(`MontX could not prepare the PDF report: ${error?.message||'Unknown error'}. Please try again.`);
-      return false;
+    } catch (error) {
+      console.error('MontX print export failed, falling back to iframe:', error);
+      try { printWindow.close(); } catch {}
+      return printViaIframe(html);
     }
   }
 
-  window.MontXPdf={download,escapeHtml:esc,buildDocument};
+  window.MontXPdf = { download, escapeHtml: esc, buildDocument };
 })();
