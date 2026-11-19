@@ -523,6 +523,10 @@ window.MontXVerifyPin = async function(storedPin, inputPin) {
       menu.style.display = 'none';
       openUserManagerModal();
     });
+    menu.querySelector('#mxMenuProfile')?.addEventListener('click', () => {
+      menu.style.display = 'none';
+      openManageProfileModal(user);
+    });
     menu.querySelector('#mxMenuUpdatePwd')?.addEventListener('click', () => {
       menu.style.display = 'none';
       openUpdatePasswordModal(user);
