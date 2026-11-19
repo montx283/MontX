@@ -104,7 +104,7 @@
       msgBox.style.display = 'block';
     };
 
-    document.getElementById('signupForm').addEventListener('submit', e => {
+    document.getElementById('signupForm').addEventListener('submit', async e => {
       e.preventDefault();
       const name = document.getElementById('regName').value.trim();
       const username = document.getElementById('regUser').value.trim().toLowerCase();
@@ -116,12 +116,13 @@
         return;
       }
 
-      // Always register new users as Viewer first
+      const encryptedPin = await window.MontXHashPin(pin);
+
       users.push({
         id: 'u-' + Date.now(),
         name,
         username,
-        pin,
+        pin: encryptedPin,
         role: 'viewer',
         label: 'Viewer'
       });
