@@ -566,13 +566,59 @@ window.MontXVerifyPin = async function(storedPin, inputPin) {
         if (VIEWER_BLOCKED_PAGES.includes(href)) link.style.display = 'none';
       });
 
+      // 1. Hide all Add / Edit / Delete buttons (keep PDF, Filters, and User Menu)
       const style = document.createElement('style');
-      style.textContent = `[data-bs-toggle="modal"],[data-del],[data-edit],.btn-danger,#addTx,form button[type="submit"]{display:none!important}`;
+      style.textContent = `
+        [data-bs-toggle="modal"],
+        [data-del], [data-delete], [data-edit],
+        [data-action="delete"], [data-action="edit"],
+        [title*="Delete" i], [title*="Remove" i], [title*="Edit" i],
+        .btn-danger,
+        button.text-danger, a.text-danger,
+        button:has(.bi-trash), button:has(.bi-trash3),
+        button:has(.bi-pencil), button:has(.bi-pencil-square),
+        button:has(.bi-plus-lg), a:has(.bi-plus-lg),
+        #addTx,
+        .quick-actions,
+        main form button[type="submit"],
+        .modal form button[type="submit"] {
+          display: none !important;
+        }
+      `;
       document.head.appendChild(style);
 
+      // 2. Block any remaining Delete / Edit clicks before page scripts run
+      document.addEventListener('click', e => {
+        if (e.target.closest('#montxUserMenu, #montxProfileOverlay, #montxPwdOverlay')) return;
+        const btn = e.target.closest('button, a');
+        if (!btn) return;
+        const text = (btn.textContent || '').trim().toLowerCase();
+        const title = (btn.getAttribute('title') || '').toLowerCase();
+        const isDangerAction =
+          btn.matches('[data-del],[data-delete],[data-edit],[data-action="delete"],[data-action="edit"],.btn-danger,.text-danger,[data-bs-toggle="modal"]') ||
+          btn.querySelector('.bi-trash,.bi-trash3,.bi-pencil,.bi-pencil-square') ||
+          /\b(delete|remove|edit)\b/.test(title) ||
+          /^(delete|remove|edit|add\s)/.test(text);
+
+        if (isDangerAction) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+        }
+      }, true);
+
+      // 3. Hard-block all localStorage writes for Viewer (except theme & own profile/password)
       const prevSet = Storage.prototype.setItem;
       Storage.prototype.setItem = function(key, value) {
-        if (this === localStorage && key.startsWith('montx-') && key !== 'montx-theme' && !window.MONTX_RESTORING && !window.MONTX_ALLOW_USER_WRITE) return;
+        if (
+          this === localStorage &&
+          key.startsWith('montx-') &&
+          key !== 'montx-theme' &&
+          !window.MONTX_RESTORING &&
+          !window.MONTX_ALLOW_USER_WRITE
+        ) {
+          console.warn('[MontX Viewer] Write blocked:', key);
+          return;
+        }
         return prevSet.call(this, key, value);
       };
     }
