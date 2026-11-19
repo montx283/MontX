@@ -62,28 +62,20 @@
   const waBtn = document.getElementById('sendWhatsappPdf');
   if (!exportBtn || !waBtn) return;
 
-  // Keep WhatsApp button enabled/disabled in sync with Save Hisab PDF
   const syncState = () => { waBtn.disabled = exportBtn.disabled; };
   syncState();
   new MutationObserver(syncState).observe(exportBtn, { attributes: true, attributeFilter: ['disabled'] });
 
-  waBtn.addEventListener('click', () => {
-    const vendorSel = document.getElementById('vendor');
-    const siteSel = document.getElementById('site');
-    const monthVal = document.getElementById('month')?.value || '';
+  waBtn.addEventListener('click', async () => {
+    const statement = typeof window.MontXGetStatement === 'function' ? window.MontXGetStatement() : null;
+    if (!statement) return;
 
-    const vendorId = vendorSel?.value || '';
-    const vendorName = vendorSel?.options[vendorSel.selectedIndex]?.textContent?.trim() || 'Vendor';
-    const siteName = siteSel?.options[siteSel.selectedIndex]?.textContent?.trim() || '';
+    const vendorObj = statement.vendor;
+    const vendorName = vendorObj.name || 'Vendor';
+    const siteName = statement.site?.name || '';
+    const monthVal = statement.month || '';
 
-    // Look up vendor's saved mobile number
-    const vendors = JSON.parse(localStorage.getItem('montx-vendors-v1') || '[]');
-    const vendorObj = vendors.find(v =>
-      String(v.id) === String(vendorId) ||
-      (v.name || v.vendorName || '').trim().toLowerCase() === vendorName.toLowerCase()
-    );
-
-    let rawPhone = vendorObj?.phone || vendorObj?.mobile || vendorObj?.contact || vendorObj?.phoneNo || '';
+    let rawPhone = vendorObj.mobile || vendorObj.phone || vendorObj.contact || '';
     if (!rawPhone) {
       rawPhone = prompt(`No mobile number saved for "${vendorName}". Enter WhatsApp number:`);
       if (!rawPhone) return;
@@ -92,26 +84,58 @@
     let phone = String(rawPhone).replace(/\D/g, '');
     if (phone.length === 10) phone = '91' + phone;
 
-    const gross = document.getElementById('gross')?.textContent?.trim() || '₹0';
-    const withdrawals = document.getElementById('withdrawals')?.textContent?.trim() || '₹0';
-    const payments = document.getElementById('payments')?.textContent?.trim() || '₹0';
-    const balance = document.getElementById('balance')?.textContent?.trim() || '₹0';
+    const origText = waBtn.innerHTML;
+    waBtn.disabled = true;
+    waBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Generating PDF...';
 
-    const msg =
-      `Hello ${vendorName},\n` +
-      `Here is your MontX Salary & Payment Hisab` + (monthVal ? ` (${monthVal})` : '') + `:\n` +
-      (siteName && siteSel.value !== 'all' ? `• Site: ${siteName}\n` : '') +
-      `• Gross Earnings: ${gross}\n` +
-      `• Withdrawals: ${withdrawals}\n` +
-      `• Payments Made: ${payments}\n` +
-      `• Outstanding Balance: ${balance}\n\n` +
-      `Please find the attached Hisab PDF.`;
+    const waWin = window.open('', '_blank');
 
-    // 1. Open WhatsApp directly to vendor's mobile number
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+    try {
+      const safe = [vendorName, siteName, monthVal].join('_').replace(/[^a-z0-9_-]+/gi, '_');
+      const fullHtml = window.MontXPdf.buildDocument({
+        filename: `MontX_Hisab_${safe}.pdf`,
+        title: 'Vendor Hisab Statement',
+        subtitle: '',
+        content: statement.html,
+        showHeader: false
+      });
 
-    // 2. Open the Hisab PDF print/save dialog so you can save & attach it
-    exportBtn.click();
+      const payload = new URLSearchParams();
+      payload.append('action', 'createPdf');
+      payload.append('filename', `MontX_Hisab_${safe}`);
+      payload.append('html', fullHtml);
+
+      const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: payload });
+      const data = await res.json();
+
+      if (!data.ok || !data.url) throw new Error('Could not create PDF link');
+
+      const gross = document.getElementById('gross')?.textContent?.trim() || '₹0';
+      const withdrawals = document.getElementById('withdrawals')?.textContent?.trim() || '₹0';
+      const payments = document.getElementById('payments')?.textContent?.trim() || '₹0';
+      const balance = document.getElementById('balance')?.textContent?.trim() || '₹0';
+
+      const msg =
+        `Hello ${vendorName},\n` +
+        `Here is your MontX Salary & Payment Hisab (${monthVal}):\n` +
+        `• Site: ${siteName}\n` +
+        `• Gross Earnings: ${gross}\n` +
+        `• Withdrawals: ${withdrawals}\n` +
+        `• Payments Made: ${payments}\n` +
+        `• Outstanding Balance: ${balance}\n\n` +
+        `Download Hisab PDF:\n${data.url}`;
+
+      const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+      if (waWin) waWin.location.href = waUrl;
+      else window.location.href = waUrl;
+    } catch (err) {
+      if (waWin) waWin.close();
+      console.error(err);
+      alert('Failed to generate PDF link. Please check your Apps Script deployment.');
+    } finally {
+      waBtn.innerHTML = origText;
+      syncState();
+    }
   });
 })();
 </script></body></html>
