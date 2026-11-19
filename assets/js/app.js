@@ -203,7 +203,7 @@ async function loadAllFromGoogleSheets() {
 
 document.addEventListener('DOMContentLoaded', loadAllFromGoogleSheets);
 // =========================================================================
-// MontX Role-Based Access Control + Super Admin User Role Manager
+// MontX Role-Based Access Control + 3-Dot User Menu (Manage Users, Password, Logout)
 // =========================================================================
 (() => {
   const AUTH_KEY = 'montx-auth-session-v1';
@@ -212,6 +212,11 @@ document.addEventListener('DOMContentLoaded', loadAllFromGoogleSheets);
   const SITE_MANAGER_PAGES = ['attendance.html', 'inventory.html'];
   const VIEWER_BLOCKED_PAGES = ['data.html'];
   const ROLE_LABELS = { super_admin: 'Super Admin', viewer: 'Viewer', site_manager: 'Site Manager' };
+  const DEFAULT_USERS = [
+    { id: 'u-admin',   name: 'Super Admin',  username: 'admin',   pin: '1234', role: 'super_admin',  label: 'Super Admin' },
+    { id: 'u-viewer',  name: 'Viewer',       username: 'viewer',  pin: '2222', role: 'viewer',       label: 'Viewer' },
+    { id: 'u-manager', name: 'Site Manager', username: 'manager', pin: '3333', role: 'site_manager', label: 'Site Manager' }
+  ];
 
   const page = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
   if (PUBLIC_PAGES.includes(page)) return;
@@ -221,21 +226,33 @@ document.addEventListener('DOMContentLoaded', loadAllFromGoogleSheets);
     catch { return null; }
   }
 
+  function readUsers() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
+      const list = Array.isArray(saved) ? saved : [];
+      DEFAULT_USERS.forEach(def => {
+        if (!list.some(u => String(u.username || '').toLowerCase() === def.username)) list.push({ ...def });
+      });
+      return list;
+    } catch {
+      return DEFAULT_USERS.map(u => ({ ...u }));
+    }
+  }
+
+  function saveUsers(users) {
+    window.MONTX_ALLOW_USER_WRITE = true;
+    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+    window.MONTX_ALLOW_USER_WRITE = false;
+  }
+
   function logout() {
     sessionStorage.removeItem(AUTH_KEY);
     location.replace('login.html');
   }
 
+  // 1. Manage Users Modal (Super Admin)
   function openUserManagerModal() {
     document.getElementById('montxUserMgrOverlay')?.remove();
-
-    const readUsers = () => {
-      try {
-        const list = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
-        return Array.isArray(list) ? list : [];
-      } catch { return []; }
-    };
-
     const overlay = document.createElement('div');
     overlay.id = 'montxUserMgrOverlay';
     overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(15,23,42,.72);display:flex;align-items:center;justify-content:center;padding:16px;font-family:Inter,sans-serif;';
@@ -244,7 +261,7 @@ document.addEventListener('DOMContentLoaded', loadAllFromGoogleSheets);
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
           <div>
             <h5 style="margin:0;font-weight:700;font-size:16px;">Manage User Roles</h5>
-            <small style="color:var(--text-muted,#94a3b8);font-size:11px;">Assign roles to signed-up users (auto-syncs to Google Sheets)</small>
+            <small style="color:var(--text-muted,#94a3b8);font-size:11px;">Assign roles to users (auto-syncs to Google Sheets)</small>
           </div>
           <button id="closeUserMgr" type="button" style="border:0;background:transparent;color:var(--text-muted,#94a3b8);font-size:20px;cursor:pointer;">&times;</button>
         </div>
@@ -258,10 +275,6 @@ document.addEventListener('DOMContentLoaded', loadAllFromGoogleSheets);
     function renderUsers() {
       const users = readUsers();
       const listEl = document.getElementById('userMgrList');
-      if (!users.length) {
-        listEl.innerHTML = '<div style="font-size:12px;color:var(--text-muted,#94a3b8);padding:12px 0;">No signed-up users yet.</div>';
-        return;
-      }
       listEl.innerHTML = users.map((u, idx) => `
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--border,#334155);border-radius:11px;background:var(--bg-primary,#0f172a);flex-wrap:wrap;">
           <div style="min-width:140px;">
@@ -286,7 +299,7 @@ document.addEventListener('DOMContentLoaded', loadAllFromGoogleSheets);
           if (!updated[i]) return;
           updated[i].role = sel.value;
           updated[i].label = ROLE_LABELS[sel.value] || sel.value;
-          localStorage.setItem(USERS_KEY, JSON.stringify(updated));
+          saveUsers(updated);
         };
       });
 
@@ -295,13 +308,130 @@ document.addEventListener('DOMContentLoaded', loadAllFromGoogleSheets);
           if (!confirm('Remove this user?')) return;
           const updated = readUsers();
           updated.splice(Number(btn.dataset.delIdx), 1);
-          localStorage.setItem(USERS_KEY, JSON.stringify(updated));
+          saveUsers(updated);
           renderUsers();
         };
       });
     }
-
     renderUsers();
+  }
+
+  // 2. Update Password Modal (All Users)
+  function openUpdatePasswordModal(currentUser) {
+    document.getElementById('montxPwdOverlay')?.remove();
+    const overlay = document.createElement('div');
+    overlay.id = 'montxPwdOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(15,23,42,.72);display:flex;align-items:center;justify-content:center;padding:16px;font-family:Inter,sans-serif;';
+    overlay.innerHTML = `
+      <div style="width:100%;max-width:390px;background:var(--bg-secondary,#1e293b);border:1px solid var(--border,#334155);border-radius:16px;padding:22px;color:var(--text-primary,#fff);box-shadow:0 20px 50px rgba(0,0,0,.4);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <h5 style="margin:0;font-weight:700;font-size:16px;">Update Password</h5>
+          <button id="closePwdModal" type="button" style="border:0;background:transparent;color:var(--text-muted,#94a3b8);font-size:20px;cursor:pointer;">&times;</button>
+        </div>
+        <div id="pwdMsg" style="display:none;font-size:12px;padding:8px 10px;border-radius:8px;margin-bottom:12px;"></div>
+        <form id="updatePwdForm" style="display:flex;flex-direction:column;gap:11px;">
+          <div>
+            <label style="display:block;font-size:11px;font-weight:600;color:var(--text-secondary,#cbd5e1);margin-bottom:4px;">Current Password / PIN</label>
+            <input id="curPin" type="password" required style="width:100%;height:38px;padding:0 12px;border-radius:9px;border:1px solid var(--border,#334155);background:var(--bg-primary,#0f172a);color:var(--text-primary,#fff);font-size:13px;box-sizing:border-box;">
+          </div>
+          <div>
+            <label style="display:block;font-size:11px;font-weight:600;color:var(--text-secondary,#cbd5e1);margin-bottom:4px;">New Password / PIN</label>
+            <input id="newPin" type="password" required minlength="4" style="width:100%;height:38px;padding:0 12px;border-radius:9px;border:1px solid var(--border,#334155);background:var(--bg-primary,#0f172a);color:var(--text-primary,#fff);font-size:13px;box-sizing:border-box;">
+          </div>
+          <div>
+            <label style="display:block;font-size:11px;font-weight:600;color:var(--text-secondary,#cbd5e1);margin-bottom:4px;">Confirm New Password / PIN</label>
+            <input id="cnfPin" type="password" required minlength="4" style="width:100%;height:38px;padding:0 12px;border-radius:9px;border:1px solid var(--border,#334155);background:var(--bg-primary,#0f172a);color:var(--text-primary,#fff);font-size:13px;box-sizing:border-box;">
+          </div>
+          <button type="submit" style="margin-top:4px;height:40px;border:0;border-radius:9px;background:var(--accent,#2563EB);color:#fff;font-weight:600;font-size:13px;cursor:pointer;">Save New Password</button>
+        </form>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    document.getElementById('closePwdModal').onclick = () => overlay.remove();
+    overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+
+    const msg = document.getElementById('pwdMsg');
+    const show = (text, ok = false) => {
+      msg.textContent = text;
+      msg.style.display = 'block';
+      msg.style.background = ok ? 'rgba(22,163,74,.14)' : 'rgba(239,68,68,.14)';
+      msg.style.color = ok ? '#16a34a' : '#ef4444';
+    };
+
+    document.getElementById('updatePwdForm').onsubmit = e => {
+      e.preventDefault();
+      const cur = document.getElementById('curPin').value.trim();
+      const nw = document.getElementById('newPin').value.trim();
+      const cnf = document.getElementById('cnfPin').value.trim();
+
+      if (nw !== cnf) return show('New passwords do not match.');
+      const users = readUsers();
+      const target = users.find(u => String(u.username || '').toLowerCase() === String(currentUser.username || '').toLowerCase());
+      if (!target || String(target.pin || '') !== cur) return show('Current password is incorrect.');
+
+      target.pin = nw;
+      saveUsers(users);
+      show('Password updated successfully!', true);
+      setTimeout(() => overlay.remove(), 1100);
+    };
+  }
+
+  // 3. Build 3-Dot Menu beside Sidebar User
+  function attachUserMenu(user) {
+    const sidebarBottom = document.querySelector('.sidebar-bottom');
+    const userBox = sidebarBottom?.querySelector('.user');
+    if (!sidebarBottom || !userBox) return;
+
+    sidebarBottom.style.position = 'relative';
+    const b = userBox.querySelector('b');
+    const small = userBox.querySelector('small');
+    if (b) b.textContent = user.label;
+    if (small) small.textContent = `@${user.username}`;
+
+    const menu = document.createElement('div');
+    menu.id = 'montxUserMenu';
+    menu.style.cssText = 'display:none;position:absolute;left:12px;right:12px;bottom:calc(100% + 8px);background:var(--bg-secondary,#1e293b);border:1px solid var(--border,#334155);border-radius:12px;padding:6px;box-shadow:0 12px 32px rgba(0,0,0,.28);z-index:9999;';
+
+    const itemStyle = 'width:100%;display:flex;align-items:center;gap:9px;padding:9px 11px;border:0;border-radius:8px;background:transparent;color:var(--text-primary,#f8fafc);font-size:12px;font-weight:500;cursor:pointer;text-align:left;';
+    menu.innerHTML = `
+      ${user.role === 'super_admin' ? `<button type="button" id="mxMenuManageUsers" style="${itemStyle}"><i class="bi bi-people"></i><span>Manage Users</span></button>` : ''}
+      <button type="button" id="mxMenuUpdatePwd" style="${itemStyle}"><i class="bi bi-key"></i><span>Update Password</span></button>
+      <div style="height:1px;background:var(--border,#334155);margin:4px 0;"></div>
+      <button type="button" id="mxMenuLogout" style="${itemStyle}color:#ef4444;"><i class="bi bi-box-arrow-right"></i><span>Logout</span></button>
+    `;
+    sidebarBottom.appendChild(menu);
+
+    menu.querySelectorAll('button').forEach(btn => {
+      btn.onmouseenter = () => { btn.style.background = 'var(--bg-tertiary,rgba(148,163,184,.12))'; };
+      btn.onmouseleave = () => { btn.style.background = 'transparent'; };
+    });
+
+    const toggleMenu = e => {
+      e.stopPropagation();
+      menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+    };
+
+    userBox.style.cursor = 'pointer';
+    userBox.onclick = toggleMenu;
+
+    document.addEventListener('click', e => {
+      if (!menu.contains(e.target) && !userBox.contains(e.target)) {
+        menu.style.display = 'none';
+      }
+    });
+
+    menu.querySelector('#mxMenuManageUsers')?.addEventListener('click', () => {
+      menu.style.display = 'none';
+      openUserManagerModal();
+    });
+    menu.querySelector('#mxMenuUpdatePwd')?.addEventListener('click', () => {
+      menu.style.display = 'none';
+      openUpdatePasswordModal(user);
+    });
+    menu.querySelector('#mxMenuLogout')?.addEventListener('click', () => {
+      menu.style.display = 'none';
+      if (confirm('Logout from MontX?')) logout();
+    });
   }
 
   document.addEventListener('DOMContentLoaded', () => {
@@ -311,34 +441,10 @@ document.addEventListener('DOMContentLoaded', loadAllFromGoogleSheets);
       return;
     }
 
-    // Update sidebar user badge & click-to-logout
-    const userBox = document.querySelector('.sidebar-bottom .user');
-    if (userBox) {
-      const b = userBox.querySelector('b');
-      const small = userBox.querySelector('small');
-      if (b) b.textContent = user.label;
-      if (small) small.textContent = `@${user.username} · Logout`;
-      userBox.style.cursor = 'pointer';
-      userBox.title = 'Click to Logout';
-      userBox.onclick = () => { if (confirm('Logout from MontX?')) logout(); };
-    }
+    attachUserMenu(user);
 
-    // Super Admin: add "Manage Users" button in sidebar
-    if (user.role === 'super_admin') {
-      const nav = document.querySelector('.sidebar .nav');
-      if (nav && !document.getElementById('navManageUsers')) {
-        const link = document.createElement('a');
-        link.id = 'navManageUsers';
-        link.className = 'nav-link';
-        link.href = '#';
-        link.innerHTML = '<i class="bi bi-person-gear" aria-hidden="true"></i><span>Manage Users</span>';
-        link.onclick = e => { e.preventDefault(); openUserManagerModal(); };
-        nav.appendChild(link);
-      }
-      return;
-    }
+    if (user.role === 'super_admin') return;
 
-    // Site Manager: Attendance & Inventory only
     if (user.role === 'site_manager') {
       if (!SITE_MANAGER_PAGES.includes(page)) {
         location.replace('attendance.html');
@@ -351,7 +457,6 @@ document.addEventListener('DOMContentLoaded', loadAllFromGoogleSheets);
       return;
     }
 
-    // Viewer: Read-only + PDF download only
     if (user.role === 'viewer') {
       if (VIEWER_BLOCKED_PAGES.includes(page)) {
         location.replace('index.html');
@@ -368,9 +473,10 @@ document.addEventListener('DOMContentLoaded', loadAllFromGoogleSheets);
 
       const prevSet = Storage.prototype.setItem;
       Storage.prototype.setItem = function(key, value) {
-        if (this === localStorage && key.startsWith('montx-') && key !== 'montx-theme' && !window.MONTX_RESTORING) return;
+        if (this === localStorage && key.startsWith('montx-') && key !== 'montx-theme' && !window.MONTX_RESTORING && !window.MONTX_ALLOW_USER_WRITE) return;
         return prevSet.call(this, key, value);
       };
     }
   });
 })();
+
