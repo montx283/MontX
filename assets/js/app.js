@@ -202,3 +202,175 @@ async function loadAllFromGoogleSheets() {
 }
 
 document.addEventListener('DOMContentLoaded', loadAllFromGoogleSheets);
+// =========================================================================
+// MontX Role-Based Access Control + Super Admin User Role Manager
+// =========================================================================
+(() => {
+  const AUTH_KEY = 'montx-auth-session-v1';
+  const USERS_KEY = 'montx-users-v1';
+  const PUBLIC_PAGES = ['login.html', 'signup.html'];
+  const SITE_MANAGER_PAGES = ['attendance.html', 'inventory.html'];
+  const VIEWER_BLOCKED_PAGES = ['data.html'];
+  const ROLE_LABELS = { super_admin: 'Super Admin', viewer: 'Viewer', site_manager: 'Site Manager' };
+
+  const page = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
+  if (PUBLIC_PAGES.includes(page)) return;
+
+  function getSession() {
+    try { return JSON.parse(sessionStorage.getItem(AUTH_KEY) || 'null'); }
+    catch { return null; }
+  }
+
+  function logout() {
+    sessionStorage.removeItem(AUTH_KEY);
+    location.replace('login.html');
+  }
+
+  function openUserManagerModal() {
+    document.getElementById('montxUserMgrOverlay')?.remove();
+
+    const readUsers = () => {
+      try {
+        const list = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
+        return Array.isArray(list) ? list : [];
+      } catch { return []; }
+    };
+
+    const overlay = document.createElement('div');
+    overlay.id = 'montxUserMgrOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(15,23,42,.72);display:flex;align-items:center;justify-content:center;padding:16px;font-family:Inter,sans-serif;';
+    overlay.innerHTML = `
+      <div style="width:100%;max-width:560px;max-height:85vh;overflow:auto;background:var(--bg-secondary,#1e293b);border:1px solid var(--border,#334155);border-radius:16px;padding:22px;color:var(--text-primary,#fff);box-shadow:0 20px 50px rgba(0,0,0,.4);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <div>
+            <h5 style="margin:0;font-weight:700;font-size:16px;">Manage User Roles</h5>
+            <small style="color:var(--text-muted,#94a3b8);font-size:11px;">Assign roles to signed-up users (auto-syncs to Google Sheets)</small>
+          </div>
+          <button id="closeUserMgr" type="button" style="border:0;background:transparent;color:var(--text-muted,#94a3b8);font-size:20px;cursor:pointer;">&times;</button>
+        </div>
+        <div id="userMgrList" style="display:flex;flex-direction:column;gap:10px;"></div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    document.getElementById('closeUserMgr').onclick = () => overlay.remove();
+    overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+
+    function renderUsers() {
+      const users = readUsers();
+      const listEl = document.getElementById('userMgrList');
+      if (!users.length) {
+        listEl.innerHTML = '<div style="font-size:12px;color:var(--text-muted,#94a3b8);padding:12px 0;">No signed-up users yet.</div>';
+        return;
+      }
+      listEl.innerHTML = users.map((u, idx) => `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--border,#334155);border-radius:11px;background:var(--bg-primary,#0f172a);flex-wrap:wrap;">
+          <div style="min-width:140px;">
+            <div style="font-size:13px;font-weight:600;">${u.name || u.username}</div>
+            <div style="font-size:11px;color:var(--text-muted,#94a3b8);">@${u.username}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <select data-role-idx="${idx}" style="height:34px;padding:0 10px;border-radius:8px;border:1px solid var(--border,#334155);background:var(--bg-secondary,#1e293b);color:var(--text-primary,#fff);font-size:12px;">
+              <option value="viewer" ${u.role === 'viewer' ? 'selected' : ''}>Viewer</option>
+              <option value="site_manager" ${u.role === 'site_manager' ? 'selected' : ''}>Site Manager</option>
+              <option value="super_admin" ${u.role === 'super_admin' ? 'selected' : ''}>Super Admin</option>
+            </select>
+            ${u.username !== 'admin' ? `<button data-del-idx="${idx}" title="Delete user" style="height:34px;width:34px;border:1px solid rgba(239,68,68,.35);border-radius:8px;background:rgba(239,68,68,.1);color:#ef4444;cursor:pointer;"><i class="bi bi-trash"></i></button>` : ''}
+          </div>
+        </div>
+      `).join('');
+
+      listEl.querySelectorAll('[data-role-idx]').forEach(sel => {
+        sel.onchange = () => {
+          const updated = readUsers();
+          const i = Number(sel.dataset.roleIdx);
+          if (!updated[i]) return;
+          updated[i].role = sel.value;
+          updated[i].label = ROLE_LABELS[sel.value] || sel.value;
+          localStorage.setItem(USERS_KEY, JSON.stringify(updated));
+        };
+      });
+
+      listEl.querySelectorAll('[data-del-idx]').forEach(btn => {
+        btn.onclick = () => {
+          if (!confirm('Remove this user?')) return;
+          const updated = readUsers();
+          updated.splice(Number(btn.dataset.delIdx), 1);
+          localStorage.setItem(USERS_KEY, JSON.stringify(updated));
+          renderUsers();
+        };
+      });
+    }
+
+    renderUsers();
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const user = getSession();
+    if (!user) {
+      location.replace('login.html');
+      return;
+    }
+
+    // Update sidebar user badge & click-to-logout
+    const userBox = document.querySelector('.sidebar-bottom .user');
+    if (userBox) {
+      const b = userBox.querySelector('b');
+      const small = userBox.querySelector('small');
+      if (b) b.textContent = user.label;
+      if (small) small.textContent = `@${user.username} · Logout`;
+      userBox.style.cursor = 'pointer';
+      userBox.title = 'Click to Logout';
+      userBox.onclick = () => { if (confirm('Logout from MontX?')) logout(); };
+    }
+
+    // Super Admin: add "Manage Users" button in sidebar
+    if (user.role === 'super_admin') {
+      const nav = document.querySelector('.sidebar .nav');
+      if (nav && !document.getElementById('navManageUsers')) {
+        const link = document.createElement('a');
+        link.id = 'navManageUsers';
+        link.className = 'nav-link';
+        link.href = '#';
+        link.innerHTML = '<i class="bi bi-person-gear" aria-hidden="true"></i><span>Manage Users</span>';
+        link.onclick = e => { e.preventDefault(); openUserManagerModal(); };
+        nav.appendChild(link);
+      }
+      return;
+    }
+
+    // Site Manager: Attendance & Inventory only
+    if (user.role === 'site_manager') {
+      if (!SITE_MANAGER_PAGES.includes(page)) {
+        location.replace('attendance.html');
+        return;
+      }
+      document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+        const href = (link.getAttribute('href') || '').toLowerCase();
+        if (!SITE_MANAGER_PAGES.includes(href)) link.style.display = 'none';
+      });
+      return;
+    }
+
+    // Viewer: Read-only + PDF download only
+    if (user.role === 'viewer') {
+      if (VIEWER_BLOCKED_PAGES.includes(page)) {
+        location.replace('index.html');
+        return;
+      }
+      document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+        const href = (link.getAttribute('href') || '').toLowerCase();
+        if (VIEWER_BLOCKED_PAGES.includes(href)) link.style.display = 'none';
+      });
+
+      const style = document.createElement('style');
+      style.textContent = `[data-bs-toggle="modal"],[data-del],[data-edit],.btn-danger,#addTx,form button[type="submit"]{display:none!important}`;
+      document.head.appendChild(style);
+
+      const prevSet = Storage.prototype.setItem;
+      Storage.prototype.setItem = function(key, value) {
+        if (this === localStorage && key.startsWith('montx-') && key !== 'montx-theme' && !window.MONTX_RESTORING) return;
+        return prevSet.call(this, key, value);
+      };
+    }
+  });
+})();
