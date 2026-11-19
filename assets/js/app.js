@@ -232,11 +232,7 @@ window.MontXVerifyPin = async function(storedPin, inputPin) {
   const SITE_MANAGER_PAGES = ['attendance.html', 'inventory.html'];
   const VIEWER_BLOCKED_PAGES = ['data.html'];
   const ROLE_LABELS = { super_admin: 'Super Admin', viewer: 'Viewer', site_manager: 'Site Manager' };
-  const DEFAULT_USERS = [
-    { id: 'u-admin',   name: 'Super Admin',  username: 'admin',   pin: '1234', role: 'super_admin',  label: 'Super Admin' },
-    { id: 'u-viewer',  name: 'Viewer',       username: 'viewer',  pin: '2222', role: 'viewer',       label: 'Viewer' },
-    { id: 'u-manager', name: 'Site Manager', username: 'manager', pin: '3333', role: 'site_manager', label: 'Site Manager' }
-  ];
+  const DEFAULT_USERS = [];
 
   const page = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
   if (PUBLIC_PAGES.includes(page)) return;
