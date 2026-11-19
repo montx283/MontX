@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>MontX | Sign Up</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="assets/css/style.css" rel="stylesheet">
+  <style>
+    body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--bg-primary,#0f172a);color:var(--text-primary,#f8fafc);font-family:'Inter',sans-serif}
+    .auth-card{width:100%;max-width:410px;background:var(--bg-secondary,#1e293b);border:1px solid var(--border,#334155);border-radius:18px;padding:28px;box-shadow:0 20px 50px rgba(0,0,0,.25);position:relative;z-index:2}
+    .auth-brand{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:22px}
+    .auth-brand-icon{width:40px;height:40px;border-radius:11px;background:var(--accent,#2563EB);color:#fff;display:flex;align-items:center;justify-content:center;font-size:19px}
+    .auth-brand b{font-size:19px;display:block;line-height:1.1}
+    .auth-brand small{font-size:10px;letter-spacing:1.2px;color:var(--text-muted,#94a3b8)}
+    .auth-title{text-align:center;margin:0 0 6px;font-size:18px;font-weight:700}
+    .auth-sub{text-align:center;margin:0 0 20px;font-size:12px;color:var(--text-muted,#94a3b8)}
+    .role-badge{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.25);color:var(--accent,#2563EB);font-size:12px;margin-bottom:16px}
+    .field{margin-bottom:13px}
+    .field label{display:block;font-size:11px;font-weight:600;color:var(--text-secondary,#cbd5e1);margin-bottom:5px}
+    .field input{width:100%;height:42px;padding:0 13px;border-radius:10px;border:1px solid var(--border,#334155);background:var(--bg-primary,#0f172a);color:var(--text-primary,#fff);font-size:13px;box-sizing:border-box;outline:0}
+    .field input:focus{border-color:var(--accent,#2563EB);box-shadow:0 0 0 3px rgba(37,99,235,.18)}
+    .auth-btn{width:100%;height:44px;border:0;border-radius:10px;background:var(--accent,#2563EB);color:#fff;font-size:13px;font-weight:700;cursor:pointer;margin-top:4px}
+    .auth-btn:hover{opacity:.93}
+    .auth-msg{font-size:12px;margin-bottom:12px;padding:9px 11px;border-radius:9px;display:none}
+    .auth-msg.err{background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.25)}
+    .auth-msg.ok{background:rgba(22,163,74,.12);color:#16a34a;border:1px solid rgba(22,163,74,.25)}
+    .auth-foot{text-align:center;margin-top:16px;font-size:12px;color:var(--text-muted,#94a3b8)}
+    .auth-foot a{color:var(--accent,#2563EB);font-weight:600;text-decoration:none}
+    .theme-fab{position:fixed;top:16px;right:16px;z-index:5}
+  </style>
+</head>
+<body>
+  <div class="glow glow-a"></div>
+  <div class="glow glow-b"></div>
+  <button class="icon-btn theme-fab" id="themeToggle" type="button" aria-label="Toggle theme"><i class="bi bi-moon-stars"></i></button>
+
+  <main class="auth-card">
+    <div class="auth-brand">
+      <span class="auth-brand-icon"><i class="bi bi-buildings"></i></span>
+      <div><b>MontX</b><small>CONSTRUCTION MANAGEMENT</small></div>
+    </div>
+
+    <h1 class="auth-title">Create Account</h1>
+    <p class="auth-sub">Register to access the MontX workspace</p>
+
+    <div class="role-badge">
+      <i class="bi bi-eye"></i>
+      <span>New accounts start as <b>Viewer</b>. Super Admin can upgrade your role later.</span>
+    </div>
+
+    <div id="authMsg" class="auth-msg"></div>
+
+    <form id="signupForm">
+      <div class="field">
+        <label for="regName">Full Name</label>
+        <input id="regName" type="text" required placeholder="e.g. Rajesh Patel">
+      </div>
+      <div class="field">
+        <label for="regUser">Username</label>
+        <input id="regUser" type="text" required autocomplete="username" placeholder="Choose a username">
+      </div>
+      <div class="field">
+        <label for="regPin">Password / PIN</label>
+        <input id="regPin" type="password" required minlength="4" autocomplete="new-password" placeholder="Minimum 4 characters">
+      </div>
+      <button type="submit" class="auth-btn">Sign Up as Viewer</button>
+    </form>
+
+    <div class="auth-foot">
+      Already have an account? <a href="login.html">Login here</a>
+    </div>
+  </main>
+
+  <script src="assets/js/app.js"></script>
+  <script>
+  (() => {
+    const USERS_KEY = 'montx-users-v1';
+    const DEFAULT_USERS = [
+      { id: 'u-admin',   name: 'Super Admin',  username: 'admin',   pin: '1234', role: 'super_admin',  label: 'Super Admin' },
+      { id: 'u-viewer',  name: 'Viewer',       username: 'viewer',  pin: '2222', role: 'viewer',       label: 'Viewer' },
+      { id: 'u-manager', name: 'Site Manager', username: 'manager', pin: '3333', role: 'site_manager', label: 'Site Manager' }
+    ];
+
+    function getUsers() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
+        const list = Array.isArray(saved) ? saved : [];
+        DEFAULT_USERS.forEach(def => {
+          if (!list.some(u => String(u.username || '').toLowerCase() === def.username)) list.push(def);
+        });
+        return list;
+      } catch {
+        return [...DEFAULT_USERS];
+      }
+    }
+
+    const msgBox = document.getElementById('authMsg');
+    const showMsg = (text, type = 'err') => {
+      msgBox.textContent = text;
+      msgBox.className = 'auth-msg ' + type;
+      msgBox.style.display = 'block';
+    };
+
+    document.getElementById('signupForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const name = document.getElementById('regName').value.trim();
+      const username = document.getElementById('regUser').value.trim().toLowerCase();
+      const pin = document.getElementById('regPin').value.trim();
+
+      const users = getUsers();
+      if (users.some(u => String(u.username || '').toLowerCase() === username)) {
+        showMsg('Username already exists. Please choose another.', 'err');
+        return;
+      }
+
+      // Always register new users as Viewer first
+      users.push({
+        id: 'u-' + Date.now(),
+        name,
+        username,
+        pin,
+        role: 'viewer',
+        label: 'Viewer'
+      });
+
+      localStorage.setItem(USERS_KEY, JSON.stringify(users));
+      showMsg('Account created as Viewer! Redirecting to login...', 'ok');
+      setTimeout(() => { location.href = 'login.html'; }, 1200);
+    });
+  })();
+  </script>
+</body>
+</html>
