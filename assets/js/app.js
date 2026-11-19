@@ -97,7 +97,8 @@ const MONTX_SHEET_MODULES = {
   'montx-salary-transactions-v1': 'Salary & Payments',
   'montx-inventory-items-v1': 'Inventory materials',
   'montx-inventory-movements-v1': 'Inventory movements',
-  'montx-expenses-v1': 'Income & Expenses'
+  'montx-expenses-v1': 'Income & Expenses',
+  'montx-users-v1': 'Users'
 };
 
 const syncTimers = {};
@@ -202,6 +203,7 @@ async function loadAllFromGoogleSheets() {
 }
 
 document.addEventListener('DOMContentLoaded', loadAllFromGoogleSheets);
+
 // =========================================================================
 // MontX Role-Based Access Control + 3-Dot User Menu (Manage Users, Password, Logout)
 // =========================================================================
@@ -255,7 +257,7 @@ document.addEventListener('DOMContentLoaded', loadAllFromGoogleSheets);
     document.getElementById('montxUserMgrOverlay')?.remove();
     const overlay = document.createElement('div');
     overlay.id = 'montxUserMgrOverlay';
-    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(15,23,42,.72);display:flex;align-items:center;justify-content:center;padding:16px;font-family:Inter,sans-serif;';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:1050;background:rgba(15,23,42,.72);display:flex;align-items:center;justify-content:center;padding:16px;font-family:Inter,sans-serif;';
     overlay.innerHTML = `
       <div style="width:100%;max-width:560px;max-height:85vh;overflow:auto;background:var(--bg-secondary,#1e293b);border:1px solid var(--border,#334155);border-radius:16px;padding:22px;color:var(--text-primary,#fff);box-shadow:0 20px 50px rgba(0,0,0,.4);">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
@@ -321,7 +323,7 @@ document.addEventListener('DOMContentLoaded', loadAllFromGoogleSheets);
     document.getElementById('montxPwdOverlay')?.remove();
     const overlay = document.createElement('div');
     overlay.id = 'montxPwdOverlay';
-    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(15,23,42,.72);display:flex;align-items:center;justify-content:center;padding:16px;font-family:Inter,sans-serif;';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:1050;background:rgba(15,23,42,.72);display:flex;align-items:center;justify-content:center;padding:16px;font-family:Inter,sans-serif;';
     overlay.innerHTML = `
       <div style="width:100%;max-width:390px;background:var(--bg-secondary,#1e293b);border:1px solid var(--border,#334155);border-radius:16px;padding:22px;color:var(--text-primary,#fff);box-shadow:0 20px 50px rgba(0,0,0,.4);">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
@@ -479,4 +481,3 @@ document.addEventListener('DOMContentLoaded', loadAllFromGoogleSheets);
     }
   });
 })();
-
