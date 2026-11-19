@@ -201,6 +201,7 @@
     }
   };
 
+  window.MontXGetStatement = statementMarkup;
   window.addEventListener('storage', render);
   render();
 })();
