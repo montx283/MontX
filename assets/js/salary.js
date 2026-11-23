@@ -102,6 +102,11 @@
 
     const withdrawals = transactions.filter(x => x.type === 'withdrawal');
     const payments = transactions.filter(x => x.type !== 'withdrawal');
+
+    // Total Karigar & Total Majur (in shifts/days)
+    const totalKarigarDays = attendance.reduce((n, x) => n + (Number(x.karigarCount) || 0) * Number(x.karigarShift ?? 1), 0);
+    const totalMajurDays = attendance.reduce((n, x) => n + (Number(x.majurCount) || 0) * Number(x.majurShift ?? 1), 0);
+
     const earned = attendance.reduce((n, x) => n + (Number(x.amount) || 0), 0);
     const withdrawn = withdrawals.reduce((n, x) => n + (Number(x.amount) || 0), 0);
     const paid = payments.reduce((n, x) => n + (Number(x.amount) || 0), 0);
@@ -124,18 +129,23 @@
 
     const txTable = (rows, amountLabel, typeName) => `<table class="withdrawal-table" style="${tableStyle}margin-top:8px"><colgroup><col style="width:16%"><col style="width:18%"><col style="width:42%"><col style="width:24%"></colgroup><thead><tr><th style="${thStyle}">Date</th><th style="${thStyle}">Mode</th><th style="${thStyle}">Remarks</th><th style="${thStyle};text-align:right">${amountLabel}</th></tr></thead><tbody>${rows.map(x => `<tr><td style="${tdStyle}">${esc(x.date)}</td><td style="${tdStyle}">${esc(x.mode || '-')}</td><td style="${tdStyle}">${esc(x.notes || '-')}</td><td style="${tdStyle};text-align:right;white-space:nowrap;font-weight:700;color:${typeName === 'Withdrawal' ? '#be3455' : '#2563a6'}">${fmtShort(x.amount)}</td></tr>`).join('') || `<tr><td colspan="4" style="${tdStyle};text-align:center;color:#64748b">No ${typeName.toLowerCase()} records.</td></tr>`}</tbody></table>`;
 
-    const summaryCard = (label, value, color = '#172033') => `<div class="summary-card" style="flex:1;min-width:0;background:#f7f9fc;border:1px solid #edf1f6;border-radius:9px;padding:13px 10px;text-align:center"><div style="font-size:10px;color:#64748b;margin-bottom:5px">${label}</div><div class="summary-card-amount" style="font-size:19px;font-weight:800;color:${color};white-space:normal">${fmtShort(value)}</div></div>`;
+    const summaryCard = (label, value, color = '#172033') => `<div class="summary-card" style="flex:1;min-width:0;background:#f7f9fc;border:1px solid #edf1f6;border-radius:9px;padding:13px 10px;text-align:center"><div style="font-size:10px;color:#64748b;margin-bottom:5px">${label}</div><div class="summary-card-amount" style="font-size:19px;font-weight:800;color:${color};white-space:normal">${value}</div></div>`;
 
-    const cards = [summaryCard('Total Party Calculation', earned), summaryCard('Total Party Withdrawal', withdrawn, '#be3455')];
-    if (paid > 0) cards.push(summaryCard('Salary Payments', paid, '#2563a6'));
-    cards.push(summaryCard('Final Balance Payable', balance, balance < 0 ? '#be3455' : '#13805d'));
+    const cards = [
+      summaryCard('Total Karigar', `${qty(totalKarigarDays)} days`, '#172033'),
+      summaryCard('Total Majur', `${qty(totalMajurDays)} days`, '#172033'),
+      summaryCard('Total Party Calculation', fmtShort(earned)),
+      summaryCard('Total Party Withdrawal', fmtShort(withdrawn), '#be3455')
+    ];
+    if (paid > 0) cards.push(summaryCard('Salary Payments', fmtShort(paid), '#2563a6'));
+    cards.push(summaryCard('Final Balance Payable', fmtShort(balance), balance < 0 ? '#be3455' : '#13805d'));
 
     const html = `
  <div class="statement-head" style="display:flex;justify-content:space-between;gap:18px;align-items:flex-start;padding-bottom:15px;border-bottom:1px solid #e5eaf0;margin-bottom:15px">
   <div class="statement-meta" style="min-width:0"><div style="font-size:20px;font-weight:800;color:#172033">${esc(vendor.name)} - Hisab Statement</div><div style="font-size:11px;color:#64748b;line-height:1.65;margin-top:5px">Site: ${esc(site.name)} | Mobile: ${esc(mobile)}<br>Rates: Karigar ${fmtShort(karigarRate)}, Majur ${fmtShort(majurRate)}<br>Period: ${esc(monthName(month))}</div></div>
   <div class="statement-net" style="text-align:right;min-width:175px"><div style="font-size:10px;color:#64748b">Net Payable (Calculation - Withdrawal${paid > 0 ? ' - Payments' : ''})</div><div class="statement-net-amount" style="font-size:26px;font-weight:900;color:${balance < 0 ? '#be3455' : '#13805d'};margin-top:4px">${fmtShort(balance)}</div></div>
  </div>
- <div class="summary-cards" style="display:flex;gap:10px;margin:0 0 20px">${cards.join('')}</div>
+ <div class="summary-cards" style="display:flex;flex-wrap:wrap;gap:10px;margin:0 0 20px">${cards.join('')}</div>
  <div style="font-size:14px;font-weight:800;color:#253449;margin:0 0 9px">Attendance Calculation Breakdown</div>
  <table class="attendance-table" style="${tableStyle}margin-bottom:20px"><colgroup><col style="width:15%"><col style="width:23%"><col style="width:23%"><col style="width:15%"><col style="width:24%"></colgroup><thead><tr><th style="${thStyle}">Date</th><th style="${thStyle}">Karigar</th><th style="${thStyle}">Majur</th><th style="${thStyle}">Earned</th><th style="${thStyle}">Note</th></tr></thead><tbody>${attendanceRows}</tbody></table>
  <div style="font-size:14px;font-weight:800;color:#253449;margin:0 0 4px">Withdrawals Breakdown</div>
