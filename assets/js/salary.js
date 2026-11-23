@@ -65,7 +65,12 @@
     }
 
     output = [...map.values()].sort((a, b) => a.vendor.localeCompare(b.vendor) || a.site.localeCompare(b.site));
-    const totals = output.reduce((acc, row) => ({ g: acc.g + row.g, w: acc.w + row.w, p: acc.p + row.p }), { g: 0, w: 0, p: 0 });
+    const totals = output.reduce(
+      (acc, row) => ({ kd: acc.kd + row.kd, md: acc.md + row.md, g: acc.g + row.g, w: acc.w + row.w, p: acc.p + row.p }),
+      { kd: 0, md: 0, g: 0, w: 0, p: 0 }
+    );
+    if ($('totalKarigar')) $('totalKarigar').textContent = qty(totals.kd);
+    if ($('totalMajur')) $('totalMajur').textContent = qty(totals.md);
     $('gross').textContent = fmt(totals.g);
     $('withdrawals').textContent = fmt(totals.w);
     $('payments').textContent = fmt(totals.p);
@@ -103,7 +108,6 @@
     const withdrawals = transactions.filter(x => x.type === 'withdrawal');
     const payments = transactions.filter(x => x.type !== 'withdrawal');
 
-    // Total Karigar & Total Majur (in shifts/days)
     const totalKarigarDays = attendance.reduce((n, x) => n + (Number(x.karigarCount) || 0) * Number(x.karigarShift ?? 1), 0);
     const totalMajurDays = attendance.reduce((n, x) => n + (Number(x.majurCount) || 0) * Number(x.majurShift ?? 1), 0);
 
