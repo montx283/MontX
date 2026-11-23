@@ -59,6 +59,13 @@
 <section class="glass panel">
 <div class="d-flex justify-content-between align-items-center mb-2"><div class="panel-title mb-0">Attendance register</div><span class="muted" style="font-size:9px">Amounts in INR</span></div>
 <div class="att-table-wrap"><table class="att-table"><thead><tr><th>Date</th><th>Site</th><th>Vendor</th><th>Karigar</th><th>Majur</th><th>Saved rates (K / M)</th><th>Amount</th><th>Actions</th></tr></thead><tbody id="attendanceRows"></tbody></table></div>
+<div id="tablePagination" class="d-flex justify-content-between align-items-center mt-3 pt-2" style="border-top:1px solid var(--border);display:none!important">
+  <span class="muted" id="visibleCountInfo" style="font-size:11px">Showing 0 of 0 entries</span>
+  <div class="d-flex gap-2">
+    <button type="button" class="btn btn-outline-soft btn-sm" id="loadMoreRowsBtn" style="font-size:11px">Show 10 more <i class="bi bi-chevron-down ms-1"></i></button>
+    <button type="button" class="btn btn-outline-soft btn-sm" id="showAllRowsBtn" style="font-size:11px">Show all</button>
+  </div>
+</div>
 </section>
 <footer>© 2026 MontX Construction Management <span><i class="bi bi-shield-check"></i> Saved in this browser</span></footer>
 </main></div>
@@ -102,4 +109,71 @@
 </form></div></div></div>
 <div class="toast-container position-fixed bottom-0 end-0 p-3"><div id="noticeToast" class="toast glass" role="status"><div class="toast-body" id="toastMessage" style="font-size:11px;color:var(--text)">Saved</div></div></div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script><script src="assets/js/custom-select.js?v=2"></script><script src="assets/js/app.js"></script><script src="assets/js/attendance.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const PAGE_SIZE = 10;
+  let visibleLimit = PAGE_SIZE;
+
+  const tbody = document.getElementById('attendanceRows');
+  const paginationBar = document.getElementById('tablePagination');
+  const infoText = document.getElementById('visibleCountInfo');
+  const loadMoreBtn = document.getElementById('loadMoreRowsBtn');
+  const showAllBtn = document.getElementById('showAllRowsBtn');
+
+  function applyRowLimit() {
+    const rows = Array.from(tbody.querySelectorAll('tr')).filter(
+      (tr) => !tr.querySelector('.empty')
+    );
+    const total = rows.length;
+
+    if (total <= PAGE_SIZE) {
+      rows.forEach((tr) => (tr.style.display = ''));
+      paginationBar.style.setProperty('display', 'none', 'important');
+      return;
+    }
+
+    rows.forEach((tr, index) => {
+      tr.style.display = index < visibleLimit ? '' : 'none';
+    });
+
+    const currentlyShown = Math.min(visibleLimit, total);
+    infoText.textContent = `Showing ${currentlyShown} of ${total} entries`;
+
+    if (currentlyShown >= total) {
+      paginationBar.style.setProperty('display', 'none', 'important');
+    } else {
+      paginationBar.style.setProperty('display', 'flex', 'important');
+      const remaining = total - currentlyShown;
+      loadMoreBtn.innerHTML = `Show ${Math.min(PAGE_SIZE, remaining)} more <i class="bi bi-chevron-down ms-1"></i>`;
+    }
+  }
+
+  loadMoreBtn.addEventListener('click', () => {
+    visibleLimit += PAGE_SIZE;
+    applyRowLimit();
+  });
+
+  showAllBtn.addEventListener('click', () => {
+    visibleLimit = Infinity;
+    applyRowLimit();
+  });
+
+  ['filterDate', 'filterSite', 'filterVendor', 'clearFilters'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      const eventType = el.tagName === 'BUTTON' ? 'click' : 'change';
+      el.addEventListener(eventType, () => {
+        visibleLimit = PAGE_SIZE;
+      });
+    }
+  });
+
+  const observer = new MutationObserver(() => {
+    applyRowLimit();
+  });
+  observer.observe(tbody, { childList: true });
+
+  applyRowLimit();
+});
+</script>
 </body></html>
