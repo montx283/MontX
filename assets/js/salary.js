@@ -136,8 +136,8 @@
     const summaryCard = (label, value, color = '#172033') => `<div class="summary-card" style="flex:1;min-width:0;background:#f7f9fc;border:1px solid #edf1f6;border-radius:9px;padding:13px 10px;text-align:center"><div style="font-size:10px;color:#64748b;margin-bottom:5px">${label}</div><div class="summary-card-amount" style="font-size:19px;font-weight:800;color:${color};white-space:normal">${value}</div></div>`;
 
     const cards = [
-      summaryCard('Total Karigar', `${qty(totalKarigarDays)} days`, '#172033'),
-      summaryCard('Total Majur', `${qty(totalMajurDays)} days`, '#172033'),
+      summaryCard('Total Karigar', `${qty(totalKarigarDays)}`, '#172033'),
+      summaryCard('Total Majur', `${qty(totalMajurDays)}`, '#172033'),
       summaryCard('Total Party Calculation', fmtShort(earned)),
       summaryCard('Total Party Withdrawal', fmtShort(withdrawn), '#be3455')
     ];
