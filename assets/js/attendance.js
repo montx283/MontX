@@ -9,6 +9,7 @@
   const VENDOR_KEY = 'montx-vendors-v1';
   const MAX_COUNT = 100;          // highest value offered in the "No. of Karigar / Majur" dropdowns
   const NORMAL_DAY_HOURS = 9;     // hourly rate = daily rate / 9
+  const PAGE_SIZE = 10;           // number of records shown per batch in the register table
 
   const COUNT_IDS = ['karigarCount', 'majurCount'];
   const SHIFT_IDS = ['karigarShift', 'majurShift'];
@@ -38,6 +39,7 @@
   let rows = read(ATT_KEY);
   let sites = read(SITE_KEY);
   let vendors = read(VENDOR_KEY);
+  let visibleLimit = PAGE_SIZE;
 
   const modal = bootstrap.Modal.getOrCreateInstance($('attendanceModal'));
   const toast = bootstrap.Toast.getOrCreateInstance($('noticeToast'));
@@ -190,8 +192,28 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Register table + summary cards
+  // Register table + summary cards + pagination
   // ---------------------------------------------------------------------------
+  function updatePaginationBar(totalCount) {
+    const paginationBar = $('tablePagination');
+    const infoText = $('visibleCountInfo');
+    const loadMoreBtn = $('loadMoreRowsBtn');
+    if (!paginationBar) return;
+
+    if (totalCount <= PAGE_SIZE || visibleLimit >= totalCount) {
+      paginationBar.style.setProperty('display', 'none', 'important');
+      return;
+    }
+
+    const currentlyShown = Math.min(visibleLimit, totalCount);
+    const remaining = totalCount - currentlyShown;
+    if (infoText) infoText.textContent = `Showing ${currentlyShown} of ${totalCount} entries`;
+    if (loadMoreBtn) {
+      loadMoreBtn.innerHTML = `Show ${Math.min(PAGE_SIZE, remaining)} more <i class="bi bi-chevron-down ms-1"></i>`;
+    }
+    paginationBar.style.setProperty('display', 'flex', 'important');
+  }
+
   function render() {
     refreshSelects();
     const date = $('filterDate').value;
@@ -212,7 +234,9 @@
     $('majurTotal').textContent = fmtDays(days('majurCount', 'majurShift'));
     $('amountTotal').textContent = fmt(list.reduce((n, e) => n + (+e.amount || 0), 0));
 
-    $('attendanceRows').innerHTML = list.map(e => `<tr>
+    const visibleList = list.slice(0, visibleLimit);
+
+    $('attendanceRows').innerHTML = visibleList.map(e => `<tr>
       <td>${esc(e.date)}</td>
       <td>${esc(e.siteName)}</td>
       <td>${esc(e.vendorName)}</td>
@@ -224,7 +248,9 @@
         <button class="btn btn-sm btn-outline-soft" data-edit="${esc(e.id)}" title="Edit"><i class="bi bi-pencil"></i></button>
         <button class="btn btn-sm btn-outline-soft text-danger" data-del="${esc(e.id)}" title="Delete"><i class="bi bi-trash"></i></button>
       </td>
-    </tr>`).join('') || '<tr><td colspan="8">No attendance records.</td></tr>';
+    </tr>`).join('') || '<tr><td colspan="8" class="empty">No attendance records.</td></tr>';
+
+    updatePaginationBar(list.length);
   }
 
   // ---------------------------------------------------------------------------
@@ -240,7 +266,7 @@
     $(id).addEventListener('change', preview);
   });
 
-  $('attendanceForm').onsubmit = e => {
+  $('attendanceForm').onsubmit = async e => {
     e.preventDefault();
     const id = $('entryId').value;
     const site = sites.find(s => s.id === $('entrySite').value);
@@ -252,6 +278,7 @@
       return;
     }
 
+    const recordId = id || (crypto.randomUUID?.() || String(Date.now()));
     const record = {
       date: $('entryDate').value,
       siteId: site.id,
@@ -277,13 +304,37 @@
       const old = rows.find(x => x.id === id);
       if (old) Object.assign(old, record);
     } else {
-      rows.push({ id: crypto.randomUUID?.() || String(Date.now()), ...record });
+      rows.push({ id: recordId, ...record });
     }
 
     saveRows();
     render();
     modal.hide();
     notify(id ? 'Attendance updated with rate snapshots.' : 'Attendance saved with rate snapshots.');
+
+    // Sync with Google Sheets backend if sendToGoogleSheet is loaded
+    if (typeof window.sendToGoogleSheet === 'function') {
+      const sheetRow = [
+        recordId,
+        record.date,
+        record.siteName,
+        record.vendorName,
+        record.karigarCount,
+        record.karigarShift,
+        record.karigarHours,
+        record.majurCount,
+        record.majurShift,
+        record.majurHours,
+        record.karigarRate,
+        record.majurRate,
+        record.amount,
+        record.notes
+      ];
+      const synced = await window.sendToGoogleSheet('Attendance', sheetRow);
+      if (!synced) {
+        notify('Saved locally, but failed to sync with Google Sheets.');
+      }
+    }
   };
 
   $('attendanceRows').onclick = e => {
@@ -303,13 +354,33 @@
     openForEdit(record);
   };
 
-  ['filterDate', 'filterSite', 'filterVendor'].forEach(id => { $(id).onchange = render; });
+  ['filterDate', 'filterSite', 'filterVendor'].forEach(id => {
+    $(id).onchange = () => {
+      visibleLimit = PAGE_SIZE;
+      render();
+    };
+  });
 
   $('clearFilters').onclick = () => {
     $('filterDate').value = '';
     $('filterSite').value = $('filterVendor').value = 'all';
+    visibleLimit = PAGE_SIZE;
     render();
   };
+
+  if ($('loadMoreRowsBtn')) {
+    $('loadMoreRowsBtn').onclick = () => {
+      visibleLimit += PAGE_SIZE;
+      render();
+    };
+  }
+
+  if ($('showAllRowsBtn')) {
+    $('showAllRowsBtn').onclick = () => {
+      visibleLimit = Infinity;
+      render();
+    };
+  }
 
   // Another tab changed the data: reload it first, otherwise this tab would later overwrite the other tab's records.
   window.addEventListener('storage', e => {
@@ -323,25 +394,3 @@
   reset();
   render();
 })();
-
-
-// Example modification for your attendance form submission
-document.getElementById('attendance-form').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    // Gather your existing form values
-    const date = document.getElementById('attendance-date').value;
-    const workerName = document.getElementById('worker-name').value;
-    const status = document.getElementById('attendance-status').value;
-    
-    // Send to Google Sheets backend
-    // Make sure this array order matches your Google Sheet columns (A, B, C...)
-    const success = await sendToGoogleSheet("Attendance", [date, workerName, status]);
-    
-    if (success) {
-        alert("Attendance recorded!");
-        this.reset();
-    } else {
-        alert("Failed to sync with database.");
-    }
-});
