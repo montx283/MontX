@@ -22,6 +22,9 @@
 .form-label{font-size:11px;font-weight:500;color:var(--text-secondary);margin-bottom:6px}
 .form-control,.form-select{background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:11px;font-size:12px;padding:10px 14px}
 .form-control:focus,.form-select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light);outline:0}
+.table-pager{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid var(--border)}
+.table-pager-info{font-size:11px;color:var(--text-muted)}
+.table-pager-actions{display:flex;gap:8px;align-items:center}
 
 @media(max-width:760px){
   .page-head{flex-direction:column;align-items:stretch;gap:12px}
@@ -56,7 +59,98 @@
     
     <div class="user"><span>MX</span><div><b>MontX Admin</b><small>Master workspace</small></div><i class="bi bi-three-dots" aria-hidden="true"></i></div>
   </div>
-</aside><main class="main"><header class="topbar"><button class="icon-btn mobile-menu" id="menuToggle" type="button" aria-label="Open navigation"><i class="bi bi-list"></i></button><div class="crumb">Workspace <i class="bi bi-chevron-right"></i> <b>Salary & Payments</b></div><div class="top-actions"><span class="live"><i></i> SYSTEM LIVE</span><button class="icon-btn"><i class="bi bi-bell"></i></button><button class="icon-btn" id="themeToggle"><i class="bi bi-moon-stars"></i></button><span class="mini-avatar">MX</span></div></header><div class="page-head"><div><div class="eyebrow">VENDOR LEDGER</div><h1>Salary & Payments<span>.</span></h1><p>Monthly vendor-wise earnings, advances and payments.</p></div><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#txModal" id="addTx">Add transaction</button></div><section class="metrics"><article class="metric glass"><div class="metric-head">Gross earnings</div><strong id="gross">₹0</strong></article><article class="metric glass"><div class="metric-head">Withdrawals</div><strong id="withdrawals">₹0</strong></article><article class="metric glass"><div class="metric-head">Payments made</div><strong id="payments">₹0</strong></article><article class="metric glass"><div class="metric-head">Outstanding</div><strong id="balance">₹0</strong></article></section><div class="tools"><input type="month" id="month" class="form-control"><select id="site" class="form-select"><option value="all">All sites</option></select><select id="vendor" class="form-select"><option value="all">All vendors</option></select><button id="clear" type="button" class="btn btn-outline-soft">Clear</button><button id="exportStatementPdf" class="btn btn-primary" type="button" disabled><i class="bi bi-file-earmark-pdf me-1"></i> Save Hisab PDF</button><button id="sendWhatsappPdf" class="btn btn-success" type="button" disabled><i class="bi bi-whatsapp me-1"></i> Send PDF to Vendor</button><span id="pdfHint" class="muted" style="font-size:9px;align-self:center">Select one vendor and one site. Print window opens; choose Save as PDF.</span></div><section class="glass panel mb-3"><h6 style="font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:12px">Monthly vendor salary statement</h6><div class="wrap"><table class="tbl"><thead><tr><th>Vendor</th><th>Site</th><th>Karigar days</th><th>Majur days</th><th>Extra hours</th><th>Attendance earnings</th><th>Withdrawals</th><th>Payments</th><th>Balance</th></tr></thead><tbody id="salaryRows"></tbody></table></div></section><section class="glass panel"><h6 style="font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:12px">Withdrawal & payment history</h6><div class="wrap"><table class="tbl"><thead><tr><th>Date</th><th>Vendor</th><th>Site</th><th>Type</th><th>Mode</th><th>Amount</th><th>Notes</th><th></th></tr></thead><tbody id="txRows"></tbody></table></div></section><footer>© 2026 MontX Construction Management <span>Saved in this browser</span></footer></main></div><div class="modal fade" id="txModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form id="txForm"><div class="modal-header"><h5 class="modal-title">Add withdrawal / payment</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body row g-3"><div class="col-6"><label class="form-label">Date</label><input class="form-control" type="date" id="txDate" required></div><div class="col-6"><label class="form-label">Type</label><select class="form-select" id="txType"><option value="withdrawal">Withdrawal / Advance</option><option value="payment">Salary payment</option></select></div><div class="col-6"><label class="form-label">Vendor</label><select class="form-select" id="txVendor" required></select></div><div class="col-6"><label class="form-label">Site</label><select class="form-select" id="txSite"><option value="">Not site-specific</option></select></div><div class="col-6"><label class="form-label">Amount ₹</label><input class="form-control" type="number" min=".01" step=".01" id="txAmount" required></div><div class="col-6"><label class="form-label">Mode</label><select class="form-select" id="txMode"><option>Cash</option><option>UPI / GPay</option><option>Bank Transfer</option><option>Cheque</option><option>Other</option></select></div><div class="col-12"><label class="form-label">Notes / reference</label><input class="form-control" id="txNotes"></div></div><div class="modal-footer"><button type="button" class="btn btn-outline-soft" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary">Save</button></div></form></div></div></div><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script><script src="assets/js/pdf-export.js"></script><script src="assets/js/custom-select.js?v=2"></script><script src="assets/js/app.js"></script><script src="assets/js/salary.js"></script><script>
+</aside><main class="main"><header class="topbar"><button class="icon-btn mobile-menu" id="menuToggle" type="button" aria-label="Open navigation"><i class="bi bi-list"></i></button><div class="crumb">Workspace <i class="bi bi-chevron-right"></i> <b>Salary & Payments</b></div><div class="top-actions"><span class="live"><i></i> SYSTEM LIVE</span><button class="icon-btn"><i class="bi bi-bell"></i></button><button class="icon-btn" id="themeToggle"><i class="bi bi-moon-stars"></i></button><span class="mini-avatar">MX</span></div></header><div class="page-head"><div><div class="eyebrow">VENDOR LEDGER</div><h1>Salary & Payments<span>.</span></h1><p>Monthly vendor-wise earnings, advances and payments.</p></div><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#txModal" id="addTx">Add transaction</button></div><section class="metrics"><article class="metric glass"><div class="metric-head">Gross earnings</div><strong id="gross">₹0</strong></article><article class="metric glass"><div class="metric-head">Withdrawals</div><strong id="withdrawals">₹0</strong></article><article class="metric glass"><div class="metric-head">Payments made</div><strong id="payments">₹0</strong></article><article class="metric glass"><div class="metric-head">Outstanding</div><strong id="balance">₹0</strong></article></section><div class="tools"><input type="month" id="month" class="form-control"><select id="site" class="form-select"><option value="all">All sites</option></select><select id="vendor" class="form-select"><option value="all">All vendors</option></select><button id="clear" type="button" class="btn btn-outline-soft">Clear</button><button id="exportStatementPdf" class="btn btn-primary" type="button" disabled><i class="bi bi-file-earmark-pdf me-1"></i> Save Hisab PDF</button><button id="sendWhatsappPdf" class="btn btn-success" type="button" disabled><i class="bi bi-whatsapp me-1"></i> Send PDF to Vendor</button><span id="pdfHint" class="muted" style="font-size:9px;align-self:center">Select one vendor and one site. Print window opens; choose Save as PDF.</span></div><section class="glass panel mb-3"><h6 style="font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:12px">Monthly vendor salary statement</h6><div class="wrap"><table class="tbl"><thead><tr><th>Vendor</th><th>Site</th><th>Karigar days</th><th>Majur days</th><th>Extra hours</th><th>Attendance earnings</th><th>Withdrawals</th><th>Payments</th><th>Balance</th></tr></thead><tbody id="salaryRows"></tbody></table></div><div class="table-pager" id="salaryPager" style="display:none"><span class="table-pager-info" id="salaryPagerInfo">Showing 0 of 0 entries</span><div class="table-pager-actions"><button type="button" class="btn btn-outline-soft btn-sm" id="salaryMoreBtn" style="font-size:11px">Show 10 more <i class="bi bi-chevron-down ms-1"></i></button><button type="button" class="btn btn-outline-soft btn-sm" id="salaryAllBtn" style="font-size:11px">Show all</button></div></div></section><section class="glass panel"><h6 style="font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:12px">Withdrawal & payment history</h6><div class="wrap"><table class="tbl"><thead><tr><th>Date</th><th>Vendor</th><th>Site</th><th>Type</th><th>Mode</th><th>Amount</th><th>Notes</th><th></th></tr></thead><tbody id="txRows"></tbody></table></div><div class="table-pager" id="txPager" style="display:none"><span class="table-pager-info" id="txPagerInfo">Showing 0 of 0 entries</span><div class="table-pager-actions"><button type="button" class="btn btn-outline-soft btn-sm" id="txMoreBtn" style="font-size:11px">Show 10 more <i class="bi bi-chevron-down ms-1"></i></button><button type="button" class="btn btn-outline-soft btn-sm" id="txAllBtn" style="font-size:11px">Show all</button></div></div></section><footer>© 2026 MontX Construction Management <span>Saved in this browser</span></footer></main></div><div class="modal fade" id="txModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form id="txForm"><div class="modal-header"><h5 class="modal-title">Add withdrawal / payment</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body row g-3"><div class="col-6"><label class="form-label">Date</label><input class="form-control" type="date" id="txDate" required></div><div class="col-6"><label class="form-label">Type</label><select class="form-select" id="txType"><option value="withdrawal">Withdrawal / Advance</option><option value="payment">Salary payment</option></select></div><div class="col-6"><label class="form-label">Vendor</label><select class="form-select" id="txVendor" required></select></div><div class="col-6"><label class="form-label">Site</label><select class="form-select" id="txSite"><option value="">Not site-specific</option></select></div><div class="col-6"><label class="form-label">Amount ₹</label><input class="form-control" type="number" min=".01" step=".01" id="txAmount" required></div><div class="col-6"><label class="form-label">Mode</label><select class="form-select" id="txMode"><option>Cash</option><option>UPI / GPay</option><option>Bank Transfer</option><option>Cheque</option><option>Other</option></select></div><div class="col-12"><label class="form-label">Notes / reference</label><input class="form-control" id="txNotes"></div></div><div class="modal-footer"><button type="button" class="btn btn-outline-soft" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary">Save</button></div></form></div></div></div><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script><script src="assets/js/pdf-export.js"></script><script src="assets/js/custom-select.js?v=2"></script><script src="assets/js/app.js"></script><script src="assets/js/salary.js"></script>
+<script>
+(() => {
+  const PAGE_SIZE = 10;
+
+  function attachTablePagination({ tbodyId, pagerId, infoId, moreBtnId, allBtnId }) {
+    const tbody = document.getElementById(tbodyId);
+    const pager = document.getElementById(pagerId);
+    const info = document.getElementById(infoId);
+    const moreBtn = document.getElementById(moreBtnId);
+    const allBtn = document.getElementById(allBtnId);
+    if (!tbody || !pager || !info || !moreBtn || !allBtn) return null;
+
+    let limit = PAGE_SIZE;
+
+    const getDataRows = () =>
+      Array.from(tbody.querySelectorAll('tr')).filter(
+        tr => tr.cells.length > 1 || (tr.cells.length === 1 && tr.cells[0].colSpan === 1)
+      );
+
+    const update = () => {
+      const rows = getDataRows();
+      const total = rows.length;
+
+      if (total <= PAGE_SIZE || limit >= total) {
+        rows.forEach(tr => (tr.style.display = ''));
+        pager.style.display = 'none';
+        return;
+      }
+
+      rows.forEach((tr, idx) => {
+        tr.style.display = idx < limit ? '' : 'none';
+      });
+
+      const shown = Math.min(limit, total);
+      const remaining = total - shown;
+      info.textContent = `Showing ${shown} of ${total} entries`;
+      moreBtn.innerHTML = `Show ${Math.min(PAGE_SIZE, remaining)} more <i class="bi bi-chevron-down ms-1"></i>`;
+      pager.style.display = 'flex';
+    };
+
+    moreBtn.addEventListener('click', () => {
+      limit += PAGE_SIZE;
+      update();
+    });
+
+    allBtn.addEventListener('click', () => {
+      limit = Infinity;
+      update();
+    });
+
+    const reset = () => {
+      limit = PAGE_SIZE;
+      update();
+    };
+
+    new MutationObserver(update).observe(tbody, { childList: true });
+    update();
+
+    return { reset, update };
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const salaryPager = attachTablePagination({
+      tbodyId: 'salaryRows',
+      pagerId: 'salaryPager',
+      infoId: 'salaryPagerInfo',
+      moreBtnId: 'salaryMoreBtn',
+      allBtnId: 'salaryAllBtn'
+    });
+
+    const txPager = attachTablePagination({
+      tbodyId: 'txRows',
+      pagerId: 'txPager',
+      infoId: 'txPagerInfo',
+      moreBtnId: 'txMoreBtn',
+      allBtnId: 'txAllBtn'
+    });
+
+    ['month', 'site', 'vendor', 'clear', 'txForm'].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const evt = el.tagName === 'FORM' ? 'submit' : (el.tagName === 'BUTTON' ? 'click' : 'change');
+      el.addEventListener(evt, () => {
+        salaryPager?.reset();
+        txPager?.reset();
+      });
+    });
+  });
+})();
+</script>
+<script>
 (() => {
   const exportBtn = document.getElementById('exportStatementPdf');
   const waBtn = document.getElementById('sendWhatsappPdf');
