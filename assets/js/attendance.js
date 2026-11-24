@@ -194,8 +194,40 @@
   // ---------------------------------------------------------------------------
   // Register table + summary cards + pagination
   // ---------------------------------------------------------------------------
+  function ensurePaginationBar() {
+    let paginationBar = $('tablePagination');
+    if (paginationBar) return paginationBar;
+
+    const panel = document.querySelector('.glass.panel');
+    if (!panel) return null;
+
+    paginationBar = document.createElement('div');
+    paginationBar.id = 'tablePagination';
+    paginationBar.className = 'd-flex justify-content-between align-items-center mt-3 pt-2';
+    paginationBar.style.cssText = 'border-top:1px solid var(--border);display:none!important';
+    paginationBar.innerHTML = `
+      <span class="muted" id="visibleCountInfo" style="font-size:11px">Showing 0 of 0 entries</span>
+      <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-soft btn-sm" id="loadMoreRowsBtn" style="font-size:11px">Show 10 more <i class="bi bi-chevron-down ms-1"></i></button>
+        <button type="button" class="btn btn-outline-soft btn-sm" id="showAllRowsBtn" style="font-size:11px">Show all</button>
+      </div>
+    `;
+    panel.appendChild(paginationBar);
+
+    $('loadMoreRowsBtn').onclick = () => {
+      visibleLimit += PAGE_SIZE;
+      render();
+    };
+    $('showAllRowsBtn').onclick = () => {
+      visibleLimit = Infinity;
+      render();
+    };
+
+    return paginationBar;
+  }
+
   function updatePaginationBar(totalCount) {
-    const paginationBar = $('tablePagination');
+    const paginationBar = ensurePaginationBar();
     const infoText = $('visibleCountInfo');
     const loadMoreBtn = $('loadMoreRowsBtn');
     if (!paginationBar) return;
