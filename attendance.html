@@ -1,179 +1,428 @@
-<!doctype html>
-<html lang="en" data-theme="light">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MontX | Labour Attendance</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-<link href="assets/css/style.css" rel="stylesheet">
-<style>
-	.page-head{display:flex;justify-content:space-between;align-items:end;gap:16px;margin:32px 0 22px}.page-head h1{margin:8px 0 4px}.page-head p{font-size:12px;color:var(--text-muted);margin:0}
-	.att-tools{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin:16px 0}.att-tools input,.att-tools select{border:1px solid var(--border);background:var(--bg-secondary);color:var(--text-primary);border-radius:11px;padding:9px 11px;font-size:12px}.att-tools input{min-width:145px}.att-table-wrap{overflow:auto}.att-table{width:100%;border-collapse:collapse;min-width:760px}.att-table th{font-size:9px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:12px;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--bg-tertiary)}.att-table td{font-size:10px;padding:13px 12px;border-bottom:1px solid var(--border);vertical-align:middle}.att-table tr:last-child td{border-bottom:0}.att-table tbody tr:hover{background:var(--bg-tertiary)}.person-pill{display:inline-flex;padding:4px 7px;border-radius:7px;background:rgba(100,116,139,0.1);color:var(--primary);font-weight:700}.amount{font-weight:800;font-variant-numeric:tabular-nums}.muted{color:var(--text-muted)}.empty{padding:42px 15px;text-align:center;color:var(--text-muted)}.empty i{font-size:30px;display:block;margin-bottom:8px}.panel{padding:16px}.panel-title{font-size:12px;font-weight:800;margin-bottom:12px;color:var(--text-primary)}.summary-line{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);font-size:10px}.summary-line:last-child{border:0}.summary-line b{font-variant-numeric:tabular-nums}.att-card{height:100%;padding:16px 18px;border:1px solid var(--border);border-radius:14px;background:var(--bg-tertiary)}.att-card-title{margin:0 0 14px;font-size:12px;font-weight:800;letter-spacing:.08em;color:var(--text-primary)}.att-hint{margin:12px 0 0;font-size:11px;color:var(--text-muted)}.att-breakdown{margin-top:6px;font-size:11px}.att-note{font-size:11px;padding:10px 14px}
-	/* Attendance modal: wide, readable layout */
-	.att-modal .modal-dialog{--bs-modal-width:1080px}
-	.att-modal .modal-header,.att-modal .modal-footer{padding:16px 24px}
-	.att-modal .modal-body{padding:22px 24px}
-	.att-modal .form-label{font-size:11px;letter-spacing:.08em;margin-bottom:6px}
-	.att-modal .form-control,.att-modal .form-select{font-size:13px!important;min-height:44px}
-	.att-modal .form-text{font-size:11px;color:var(--text-muted);margin-top:6px}
-	.att-modal .rate-preview{padding:14px 16px;font-size:12px}
-	.att-modal .rate-preview strong{font-size:26px;margin:6px 0 4px;letter-spacing:-.5px}
-	.att-modal .modal-footer .btn{padding:10px 20px;font-size:12px}
-	@media(max-width:700px){.page-head{align-items:start;flex-direction:column}.att-tools>*{flex:1}.att-tools input,.att-tools select{min-width:0}}
-</style>
-</head>
-<body>
-<div class="glow glow-a"></div><div class="glow glow-b"></div>
-<div class="layout">
-<aside class="sidebar glass" id="sidebar">
-  <a class="brand" href="index.html" aria-label="MontX home"><span class="brand-icon"><i class="bi bi-buildings" aria-hidden="true"></i></span><span><b>MontX</b><small>CONSTRUCTION MANAGEMENT</small></span></a>
-  <div class="nav-label">WORKSPACE</div>
-  <nav class="nav flex-column" aria-label="Workspace navigation">
-    <a class="nav-link" href="index.html"><i class="bi bi-grid-1x2" aria-hidden="true"></i><span>Overview</span></a>
-<a class="nav-link" href="sites.html"><i class="bi bi-building" aria-hidden="true"></i><span>Projects & Sites</span></a>
-<a class="nav-link" href="vendors.html"><i class="bi bi-people" aria-hidden="true"></i><span>Vendors</span></a>
-<a class="nav-link active" href="attendance.html" aria-current="page"><i class="bi bi-person-workspace" aria-hidden="true"></i><span>Labour & Attendance</span></a>
-<a class="nav-link" href="salary.html"><i class="bi bi-wallet2" aria-hidden="true"></i><span>Salary & Payments</span></a>
-<a class="nav-link" href="inventory.html"><i class="bi bi-box-seam" aria-hidden="true"></i><span>Inventory</span></a>
-<a class="nav-link" href="expenses.html"><i class="bi bi-receipt" aria-hidden="true"></i><span>Expenses</span></a>
-<a class="nav-link" href="reports.html"><i class="bi bi-graph-up-arrow" aria-hidden="true"></i><span>Project Cost Report</span></a>
-  <a class="nav-link" href="performance.html"><i class="bi bi-speedometer2" aria-hidden="true"></i><span>Performance</span></a>
-<a class="nav-link" href="data.html"><i class="bi bi-shield-check" aria-hidden="true"></i><span>Data & Backup</span></a>
-  </nav>
-  <div class="sidebar-bottom">
-    
-    <div class="user"><span>MX</span><div><b>MontX Admin</b><small>Master workspace</small></div><i class="bi bi-three-dots" aria-hidden="true"></i></div>
-  </div>
-</aside>
-<main class="main">
-<header class="topbar"><button class="icon-btn mobile-menu" id="menuToggle"><i class="bi bi-list"></i></button><div class="crumb">Workspace <i class="bi bi-chevron-right"></i> <b>Labour Attendance</b></div><div class="top-actions"><span class="live"><i></i> SYSTEM LIVE</span><button class="icon-btn"><i class="bi bi-bell"></i></button><button class="icon-btn" id="themeToggle"><i class="bi bi-moon-stars"></i></button><span class="mini-avatar">MX</span></div></header>
-<div class="page-head"><div><div class="eyebrow">DAILY WORK LOG <span></span> VENDOR-WISE ENTRY</div><h1>Labour Attendance<span>.</span></h1><p>Record daily Karigar and Majur totals. Half-day entries are supported.</p></div><button class="btn btn-primary" id="addEntryBtn" data-bs-toggle="modal" data-bs-target="#attendanceModal"><i class="bi bi-plus-lg"></i> Add attendance</button></div>
-<section class="metrics" style="margin-bottom:15px">
-<article class="metric glass"><div class="metric-head">Attendance entries <i class="bi bi-journal-check"></i></div><strong id="entryTotal">0</strong><small>Matching records</small></article>
-<article class="metric glass"><div class="metric-head">Karigar days <i class="bi bi-person-gear"></i></div><strong id="karigarTotal">0</strong><small>Full + half days</small></article>
-<article class="metric glass"><div class="metric-head">Majur days <i class="bi bi-people"></i></div><strong id="majurTotal">0</strong><small>Full + half days</small></article>
-<article class="metric glass"><div class="metric-head">Attendance amount <i class="bi bi-currency-rupee"></i></div><strong id="amountTotal">₹0</strong><small>Based on saved rate snapshots</small></article>
-</section>
-<div class="att-tools"><input type="date" id="filterDate" aria-label="Filter date"><select id="filterSite" class="form-select"><option value="all">All sites</option></select><select id="filterVendor" class="form-select"><option value="all">All vendors</option></select><button class="btn btn-outline-soft" id="clearFilters"><i class="bi bi-x-circle me-1"></i>Clear filters</button><span class="ms-auto muted" id="recordCount" style="font-size:9px">0 records</span></div>
-<section class="glass panel">
-<div class="d-flex justify-content-between align-items-center mb-2"><div class="panel-title mb-0">Attendance register</div><span class="muted" style="font-size:9px">Amounts in INR</span></div>
-<div class="att-table-wrap"><table class="att-table"><thead><tr><th>Date</th><th>Site</th><th>Vendor</th><th>Karigar</th><th>Majur</th><th>Saved rates (K / M)</th><th>Amount</th><th>Actions</th></tr></thead><tbody id="attendanceRows"></tbody></table></div>
-<div id="tablePagination" class="d-flex justify-content-between align-items-center mt-3 pt-2" style="border-top:1px solid var(--border);display:none!important">
-  <span class="muted" id="visibleCountInfo" style="font-size:11px">Showing 0 of 0 entries</span>
-  <div class="d-flex gap-2">
-    <button type="button" class="btn btn-outline-soft btn-sm" id="loadMoreRowsBtn" style="font-size:11px">Show 10 more <i class="bi bi-chevron-down ms-1"></i></button>
-    <button type="button" class="btn btn-outline-soft btn-sm" id="showAllRowsBtn" style="font-size:11px">Show all</button>
-  </div>
-</div>
-</section>
-<footer>© 2026 MontX Construction Management <span><i class="bi bi-shield-check"></i> Saved in this browser</span></footer>
-</main></div>
-<div class="modal fade att-modal" id="attendanceModal" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
-<div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form id="attendanceForm">
-<div class="modal-header"><h5 class="modal-title" id="modalTitle">Add attendance entry</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
-<div class="modal-body">
-<input type="hidden" id="entryId">
-<div class="row g-3">
-<div class="col-12 col-md-4"><label class="form-label" for="entryDate">Date *</label><input class="form-control" type="date" id="entryDate" required></div>
-<div class="col-12 col-md-4"><label class="form-label" for="entrySite">Site *</label><select class="form-select" id="entrySite" required></select></div>
-<div class="col-12 col-md-4"><label class="form-label" for="entryVendor">Vendor *</label><select class="form-select" id="entryVendor" required></select><div class="form-text" id="vendorHint">Pick a site first. Only vendors assigned to it are listed.</div></div>
-<div class="col-12 col-lg-6">
-<section class="att-card" aria-labelledby="karigarTitle">
-<h6 class="att-card-title" id="karigarTitle">KARIGAR ENTRY</h6>
-<div class="row g-3">
-<div class="col-12 col-sm-4"><label class="form-label" for="karigarCount">No. of Karigar</label><select class="form-select" id="karigarCount" required><option value="0" selected>0</option></select></div>
-<div class="col-12 col-sm-4"><label class="form-label" for="karigarShift">Shift multiplier</label><select class="form-select" id="karigarShift"><option value="1">Full Day (1)</option><option value="0.5">Half Day (0.5)</option><option value="2">Double Shift (2)</option><option value="1.5">Overtime (1.5)</option></select></div>
-<div class="col-12 col-sm-4"><label class="form-label" for="karigarHours">Extra hours</label><input class="form-control" id="karigarHours" type="number" min="0" step="0.25" value="0"></div>
-</div>
-<p class="att-hint">Hourly rate = daily rate ÷ 9.</p>
-</section>
-</div>
-<div class="col-12 col-lg-6">
-<section class="att-card" aria-labelledby="majurTitle">
-<h6 class="att-card-title" id="majurTitle">MAJUR ENTRY</h6>
-<div class="row g-3">
-<div class="col-12 col-sm-4"><label class="form-label" for="majurCount">No. of Majur</label><select class="form-select" id="majurCount" required><option value="0" selected>0</option></select></div>
-<div class="col-12 col-sm-4"><label class="form-label" for="majurShift">Shift multiplier</label><select class="form-select" id="majurShift"><option value="1">Full Day (1)</option><option value="0.5">Half Day (0.5)</option><option value="2">Double Shift (2)</option><option value="1.5">Overtime (1.5)</option></select></div>
-<div class="col-12 col-sm-4"><label class="form-label" for="majurHours">Extra hours</label><input class="form-control" id="majurHours" type="number" min="0" step="0.25" value="0"></div>
-</div>
-<p class="att-hint">Hourly rate = daily rate ÷ 9.</p>
-</section>
-</div>
-<div class="col-12"><div class="rate-preview"><div class="d-flex justify-content-between flex-wrap gap-2"><span>Live calculated attendance amount</span><span class="muted" id="rateInfo">Rates not selected</span></div><strong id="liveAmount">₹0.00</strong><span class="muted">Count × daily rate × shift multiplier + extra hours × (daily rate ÷ 9)</span><div class="muted att-breakdown" id="calcBreakdown"></div></div></div>
-<div class="col-12"><label class="form-label" for="entryNotes">Notes (optional)</label><input class="form-control" id="entryNotes" maxlength="250" placeholder="Work details or attendance note"></div>
-</div>
-<div class="alert alert-warning att-note mt-3 mb-0">When saved, the current vendor rates are copied into this attendance record. Later rate changes will not alter this entry's amount.</div>
-</div>
-<div class="modal-footer"><button type="button" class="btn btn-outline-soft" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-primary" id="saveEntryBtn">Save attendance</button></div>
-</form></div></div></div>
-<div class="toast-container position-fixed bottom-0 end-0 p-3"><div id="noticeToast" class="toast glass" role="status"><div class="toast-body" id="toastMessage" style="font-size:11px;color:var(--text)">Saved</div></div></div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script><script src="assets/js/custom-select.js?v=2"></script><script src="assets/js/app.js"></script><script src="assets/js/attendance.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  const PAGE_SIZE = 10;
+(() => {
+  'use strict';
+
+  // ---------------------------------------------------------------------------
+  // Constants and helpers
+  // ---------------------------------------------------------------------------
+  const ATT_KEY = 'montx-attendance-v1';
+  const SITE_KEY = 'montx-sites-v1';
+  const VENDOR_KEY = 'montx-vendors-v1';
+  const MAX_COUNT = 100;          // highest value offered in the "No. of Karigar / Majur" dropdowns
+  const NORMAL_DAY_HOURS = 9;     // hourly rate = daily rate / 9
+  const PAGE_SIZE = 10;           // number of records shown per batch in the register table
+
+  const COUNT_IDS = ['karigarCount', 'majurCount'];
+  const SHIFT_IDS = ['karigarShift', 'majurShift'];
+  const HOUR_IDS = ['karigarHours', 'majurHours'];
+
+  const $ = id => document.getElementById(id);
+
+  const read = key => {
+    try { return JSON.parse(localStorage.getItem(key) || '[]'); }
+    catch { return []; }
+  };
+
+  const fmt = n => '₹' + new Intl.NumberFormat('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(n || 0);
+
+  const fmtDays = n => new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 }).format(n || 0);
+
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+
+  // ---------------------------------------------------------------------------
+  // State
+  // ---------------------------------------------------------------------------
+  let rows = read(ATT_KEY);
+  let sites = read(SITE_KEY);
+  let vendors = read(VENDOR_KEY);
   let visibleLimit = PAGE_SIZE;
 
-  const tbody = document.getElementById('attendanceRows');
-  const paginationBar = document.getElementById('tablePagination');
-  const infoText = document.getElementById('visibleCountInfo');
-  const loadMoreBtn = document.getElementById('loadMoreRowsBtn');
-  const showAllBtn = document.getElementById('showAllRowsBtn');
+  const modal = bootstrap.Modal.getOrCreateInstance($('attendanceModal'));
+  const toast = bootstrap.Toast.getOrCreateInstance($('noticeToast'));
 
-  function applyRowLimit() {
-    const rows = Array.from(tbody.querySelectorAll('tr')).filter(
-      (tr) => !tr.querySelector('.empty')
+  function notify(message) {
+    $('toastMessage').textContent = message;
+    toast.show();
+  }
+
+  function load() {
+    sites = read(SITE_KEY);
+    vendors = read(VENDOR_KEY);
+  }
+
+  const saveRows = () => localStorage.setItem(ATT_KEY, JSON.stringify(rows));
+
+  // ---------------------------------------------------------------------------
+  // Dropdown helpers
+  // ---------------------------------------------------------------------------
+  // "No. of Karigar" and "No. of Majur" are dropdowns from 0 to MAX_COUNT.
+  function fillCountOptions() {
+    const options = Array.from({ length: MAX_COUNT + 1 }, (_, i) => `<option value="${i}">${i}</option>`).join('');
+    COUNT_IDS.forEach(id => {
+      $(id).innerHTML = options;
+      $(id).value = '0';
+    });
+  }
+
+  // Make sure a saved value can be selected even if the list does not contain it
+  // (for example 2.5 saved by the older numeric input). Without this the dropdown
+  // would go blank and saving would silently change the record.
+  function ensureOption(select, value, label, sorted = false) {
+    const v = String(value);
+    if ([...select.options].some(o => o.value === v)) return;
+    const before = sorted ? [...select.options].find(o => Number(o.value) > Number(v)) : null;
+    select.add(new Option(label, v), before || null);
+  }
+
+  function setCount(id, value) {
+    const n = Number(value);
+    const v = Number.isFinite(n) && n >= 0 ? n : 0;
+    ensureOption($(id), v, String(v), true);
+    $(id).value = String(v);
+  }
+
+  function setShift(id, value) {
+    const n = Number(value);
+    const v = Number.isFinite(n) && n > 0 ? n : 1;       // records saved before shifts existed count as a full day
+    ensureOption($(id), v, `Custom (${v})`, true);
+    $(id).value = String(v);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Calculation
+  // ---------------------------------------------------------------------------
+  function getVendor() {
+    return vendors.find(v => v.id === $('entryVendor').value);
+  }
+
+  function calc(vendor) {
+    const k = +$('karigarCount').value || 0;
+    const m = +$('majurCount').value || 0;
+    const kh = +$('karigarHours').value || 0;
+    const mh = +$('majurHours').value || 0;
+    const ks = +$('karigarShift').value;
+    const ms = +$('majurShift').value;
+    const kr = +(vendor?.karigarRate || 0);
+    const mr = +(vendor?.majurRate || 0);
+    const ka = k * ks * kr + kh * kr / NORMAL_DAY_HOURS;
+    const ma = m * ms * mr + mh * mr / NORMAL_DAY_HOURS;
+    return { k, m, kh, mh, ks, ms, kr, mr, ka, ma, amount: ka + ma };
+  }
+
+  function preview() {
+    const vendor = getVendor();
+    const a = calc(vendor);
+    $('liveAmount').textContent = fmt(vendor ? a.amount : 0);
+    $('rateInfo').textContent = vendor
+      ? `Karigar ₹${a.kr}/day (₹${(a.kr / NORMAL_DAY_HOURS).toFixed(2)}/hr) · Majur ₹${a.mr}/day (₹${(a.mr / NORMAL_DAY_HOURS).toFixed(2)}/hr)`
+      : 'Select vendor';
+    $('calcBreakdown').textContent = vendor ? `Karigar ${fmt(a.ka)} + Majur ${fmt(a.ma)}` : '';
+  }
+
+  // ---------------------------------------------------------------------------
+  // Site / vendor lists
+  // ---------------------------------------------------------------------------
+  function refreshSelects() {
+    load();
+    const filterSite = $('filterSite').value || 'all';
+    const filterVendor = $('filterVendor').value || 'all';
+    const entrySite = $('entrySite').value || '';
+    const editing = rows.find(r => r.id === $('entryId').value);
+
+    $('filterSite').innerHTML = '<option value="all">All sites</option>' +
+      sites.map(s => `<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('');
+    $('filterVendor').innerHTML = '<option value="all">All vendors</option>' +
+      vendors.map(v => `<option value="${esc(v.id)}">${esc(v.name)}</option>`).join('');
+    $('filterSite').value = sites.some(s => s.id === filterSite) ? filterSite : 'all';
+    $('filterVendor').value = vendors.some(v => v.id === filterVendor) ? filterVendor : 'all';
+
+    // New entries: active sites only. An entry being edited keeps its own site even if that site is no longer active.
+    $('entrySite').innerHTML = '<option value="">Select site</option>' +
+      sites.filter(s => s.status === 'Active' || s.id === editing?.siteId)
+        .map(s => `<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('');
+    $('entrySite').value = sites.some(s => s.id === entrySite) ? entrySite : '';
+  }
+
+  function vendorOptions(selectedId = '') {
+    const siteId = $('entrySite').value;
+    const list = vendors.filter(v =>
+      v.id === selectedId || (v.status === 'Active' && (v.siteIds || []).includes(siteId))
     );
-    const total = rows.length;
+    $('entryVendor').innerHTML = '<option value="">Select vendor</option>' +
+      list.map(v => `<option value="${esc(v.id)}" ${v.id === selectedId ? 'selected' : ''}>${esc(v.name)}</option>`).join('');
+    preview();
+  }
 
-    if (total <= PAGE_SIZE) {
-      rows.forEach((tr) => (tr.style.display = ''));
+  // ---------------------------------------------------------------------------
+  // Form open / reset
+  // ---------------------------------------------------------------------------
+  function reset() {
+    $('attendanceForm').reset();
+    $('entryId').value = '';
+    $('entryDate').value = new Date().toISOString().slice(0, 10);
+    fillCountOptions();
+    HOUR_IDS.forEach(id => { $(id).value = 0; });
+    SHIFT_IDS.forEach(id => { $(id).value = '1'; });
+    $('modalTitle').textContent = 'Add attendance entry';
+    $('saveEntryBtn').textContent = 'Save attendance';
+    refreshSelects();
+    $('entrySite').value = '';
+    vendorOptions();
+  }
+
+  function openForEdit(record) {
+    reset();
+    $('entryId').value = record.id;
+    refreshSelects();                                  // now includes this entry's site even if it is inactive
+    $('entryDate').value = record.date;
+    $('entrySite').value = record.siteId;
+    vendorOptions(record.vendorId);
+    COUNT_IDS.forEach(id => setCount(id, record[id]));
+    SHIFT_IDS.forEach(id => setShift(id, record[id]));
+    HOUR_IDS.forEach(id => { $(id).value = record[id] ?? 0; });
+    $('entryNotes').value = record.notes || '';
+    $('modalTitle').textContent = 'Edit attendance entry';
+    $('saveEntryBtn').textContent = 'Update attendance';
+    preview();
+    modal.show();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Register table + summary cards + pagination
+  // ---------------------------------------------------------------------------
+  function ensurePaginationBar() {
+    let paginationBar = $('tablePagination');
+    if (paginationBar) return paginationBar;
+
+    const panel = document.querySelector('.glass.panel');
+    if (!panel) return null;
+
+    paginationBar = document.createElement('div');
+    paginationBar.id = 'tablePagination';
+    paginationBar.className = 'd-flex justify-content-between align-items-center mt-3 pt-2';
+    paginationBar.style.cssText = 'border-top:1px solid var(--border);display:none!important';
+    paginationBar.innerHTML = `
+      <span class="muted" id="visibleCountInfo" style="font-size:11px">Showing 0 of 0 entries</span>
+      <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-soft btn-sm" id="loadMoreRowsBtn" style="font-size:11px">Show 10 more <i class="bi bi-chevron-down ms-1"></i></button>
+        <button type="button" class="btn btn-outline-soft btn-sm" id="showAllRowsBtn" style="font-size:11px">Show all</button>
+      </div>
+    `;
+    panel.appendChild(paginationBar);
+
+    $('loadMoreRowsBtn').onclick = () => {
+      visibleLimit += PAGE_SIZE;
+      render();
+    };
+    $('showAllRowsBtn').onclick = () => {
+      visibleLimit = Infinity;
+      render();
+    };
+
+    return paginationBar;
+  }
+
+  function updatePaginationBar(totalCount) {
+    const paginationBar = ensurePaginationBar();
+    const infoText = $('visibleCountInfo');
+    const loadMoreBtn = $('loadMoreRowsBtn');
+    if (!paginationBar) return;
+
+    if (totalCount <= PAGE_SIZE || visibleLimit >= totalCount) {
       paginationBar.style.setProperty('display', 'none', 'important');
       return;
     }
 
-    rows.forEach((tr, index) => {
-      tr.style.display = index < visibleLimit ? '' : 'none';
-    });
-
-    const currentlyShown = Math.min(visibleLimit, total);
-    infoText.textContent = `Showing ${currentlyShown} of ${total} entries`;
-
-    if (currentlyShown >= total) {
-      paginationBar.style.setProperty('display', 'none', 'important');
-    } else {
-      paginationBar.style.setProperty('display', 'flex', 'important');
-      const remaining = total - currentlyShown;
+    const currentlyShown = Math.min(visibleLimit, totalCount);
+    const remaining = totalCount - currentlyShown;
+    if (infoText) infoText.textContent = `Showing ${currentlyShown} of ${totalCount} entries`;
+    if (loadMoreBtn) {
       loadMoreBtn.innerHTML = `Show ${Math.min(PAGE_SIZE, remaining)} more <i class="bi bi-chevron-down ms-1"></i>`;
     }
+    paginationBar.style.setProperty('display', 'flex', 'important');
   }
 
-  loadMoreBtn.addEventListener('click', () => {
-    visibleLimit += PAGE_SIZE;
-    applyRowLimit();
+  function render() {
+    refreshSelects();
+    const date = $('filterDate').value;
+    const siteId = $('filterSite').value;
+    const vendorId = $('filterVendor').value;
+
+    const list = rows
+      .filter(e => (!date || e.date === date) &&
+                   (siteId === 'all' || e.siteId === siteId) &&
+                   (vendorId === 'all' || e.vendorId === vendorId))
+      .sort((a, b) => String(b.date).localeCompare(String(a.date)));
+
+    const days = (key, shiftKey) => list.reduce((n, e) => n + (+e[key] || 0) * (+(e[shiftKey] ?? 1) || 0), 0);
+
+    $('entryTotal').textContent = list.length;
+    $('recordCount').textContent = list.length + ' records';
+    $('karigarTotal').textContent = fmtDays(days('karigarCount', 'karigarShift'));
+    $('majurTotal').textContent = fmtDays(days('majurCount', 'majurShift'));
+    $('amountTotal').textContent = fmt(list.reduce((n, e) => n + (+e.amount || 0), 0));
+
+    const visibleList = list.slice(0, visibleLimit);
+
+    $('attendanceRows').innerHTML = visibleList.map(e => `<tr>
+      <td>${esc(e.date)}</td>
+      <td>${esc(e.siteName)}</td>
+      <td>${esc(e.vendorName)}</td>
+      <td>${e.karigarCount} × ${e.karigarShift ?? 1} + ${e.karigarHours || 0}h</td>
+      <td>${e.majurCount} × ${e.majurShift ?? 1} + ${e.majurHours || 0}h</td>
+      <td>₹${Number(e.karigarRate || 0).toFixed(2)} / ₹${Number(e.majurRate || 0).toFixed(2)}</td>
+      <td class="amount">${fmt(e.amount)}</td>
+      <td>
+        <button class="btn btn-sm btn-outline-soft" data-edit="${esc(e.id)}" title="Edit"><i class="bi bi-pencil"></i></button>
+        <button class="btn btn-sm btn-outline-soft text-danger" data-del="${esc(e.id)}" title="Delete"><i class="bi bi-trash"></i></button>
+      </td>
+    </tr>`).join('') || '<tr><td colspan="8" class="empty">No attendance records.</td></tr>';
+
+    updatePaginationBar(list.length);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Events
+  // ---------------------------------------------------------------------------
+  $('addEntryBtn').onclick = reset;
+  $('entrySite').onchange = () => vendorOptions();
+  $('entryVendor').onchange = preview;
+
+  // Dropdowns fire "change" and number inputs fire "input"; listen to both so the live amount always updates.
+  [...COUNT_IDS, ...SHIFT_IDS, ...HOUR_IDS].forEach(id => {
+    $(id).addEventListener('input', preview);
+    $(id).addEventListener('change', preview);
   });
 
-  showAllBtn.addEventListener('click', () => {
-    visibleLimit = Infinity;
-    applyRowLimit();
-  });
+  $('attendanceForm').onsubmit = async e => {
+    e.preventDefault();
+    const id = $('entryId').value;
+    const site = sites.find(s => s.id === $('entrySite').value);
+    const vendor = getVendor();
+    const a = calc(vendor);
 
-  ['filterDate', 'filterSite', 'filterVendor', 'clearFilters'].forEach((id) => {
-    const el = document.getElementById(id);
-    if (el) {
-      const eventType = el.tagName === 'BUTTON' ? 'click' : 'change';
-      el.addEventListener(eventType, () => {
-        visibleLimit = PAGE_SIZE;
-      });
+    if (!site || !vendor || !$('entryDate').value || a.kh < 0 || a.mh < 0 || a.k < 0 || a.m < 0) {
+      notify('Check attendance details.');
+      return;
     }
+
+    const recordId = id || (crypto.randomUUID?.() || String(Date.now()));
+    const record = {
+      date: $('entryDate').value,
+      siteId: site.id,
+      siteName: site.name,
+      vendorId: vendor.id,
+      vendorName: vendor.name,
+      karigarCount: a.k,
+      majurCount: a.m,
+      karigarShift: a.ks,
+      majurShift: a.ms,
+      karigarHours: a.kh,
+      majurHours: a.mh,
+      karigarRate: a.kr,
+      majurRate: a.mr,
+      karigarAmount: a.ka,
+      majurAmount: a.ma,
+      amount: a.amount,
+      notes: $('entryNotes').value.trim(),
+      calculationVersion: 2
+    };
+
+    if (id) {
+      const old = rows.find(x => x.id === id);
+      if (old) Object.assign(old, record);
+    } else {
+      rows.push({ id: recordId, ...record });
+    }
+
+    saveRows();
+    render();
+    modal.hide();
+    notify(id ? 'Attendance updated with rate snapshots.' : 'Attendance saved with rate snapshots.');
+
+    // Sync with Google Sheets backend if sendToGoogleSheet is loaded
+    if (typeof window.sendToGoogleSheet === 'function') {
+      const sheetRow = [
+        recordId,
+        record.date,
+        record.siteName,
+        record.vendorName,
+        record.karigarCount,
+        record.karigarShift,
+        record.karigarHours,
+        record.majurCount,
+        record.majurShift,
+        record.majurHours,
+        record.karigarRate,
+        record.majurRate,
+        record.amount,
+        record.notes
+      ];
+      const synced = await window.sendToGoogleSheet('Attendance', sheetRow);
+      if (!synced) {
+        notify('Saved locally, but failed to sync with Google Sheets.');
+      }
+    }
+  };
+
+  $('attendanceRows').onclick = e => {
+    const button = e.target.closest('[data-edit],[data-del]');
+    if (!button) return;
+    const record = rows.find(x => x.id === (button.dataset.edit || button.dataset.del));
+    if (!record) return;
+
+    if (button.dataset.del) {
+      if (confirm('Delete attendance entry?')) {
+        rows = rows.filter(x => x.id !== record.id);
+        saveRows();
+        render();
+      }
+      return;
+    }
+    openForEdit(record);
+  };
+
+  ['filterDate', 'filterSite', 'filterVendor'].forEach(id => {
+    $(id).onchange = () => {
+      visibleLimit = PAGE_SIZE;
+      render();
+    };
   });
 
-  const observer = new MutationObserver(() => {
-    applyRowLimit();
-  });
-  observer.observe(tbody, { childList: true });
+  $('clearFilters').onclick = () => {
+    $('filterDate').value = '';
+    $('filterSite').value = $('filterVendor').value = 'all';
+    visibleLimit = PAGE_SIZE;
+    render();
+  };
 
-  applyRowLimit();
-});
-</script>
-</body></html>
+  if ($('loadMoreRowsBtn')) {
+    $('loadMoreRowsBtn').onclick = () => {
+      visibleLimit += PAGE_SIZE;
+      render();
+    };
+  }
+
+  if ($('showAllRowsBtn')) {
+    $('showAllRowsBtn').onclick = () => {
+      visibleLimit = Infinity;
+      render();
+    };
+  }
+
+  // Another tab changed the data: reload it first, otherwise this tab would later overwrite the other tab's records.
+  window.addEventListener('storage', e => {
+    if (e.key === null || e.key === ATT_KEY) rows = read(ATT_KEY);
+    render();
+  });
+
+  // ---------------------------------------------------------------------------
+  // Start
+  // ---------------------------------------------------------------------------
+  reset();
+  render();
+})();
