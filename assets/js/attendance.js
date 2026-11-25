@@ -42,7 +42,8 @@
   let vendors = read(VENDOR_KEY);
   let visibleLimit = PAGE_SIZE;
 
-  const modal = bootstrap.Modal.getOrCreateInstance($('attendanceModal'));
+  const modalEl = $('attendanceModal');
+  const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
   const toast = bootstrap.Toast.getOrCreateInstance($('noticeToast'));
 
   function notify(message) {
@@ -60,6 +61,14 @@
   // ---------------------------------------------------------------------------
   // Dropdown helpers
   // ---------------------------------------------------------------------------
+  function syncCustomSelect(selectEl) {
+    if (!selectEl) return;
+    if (typeof selectEl._customSelectRefresh === 'function') {
+      selectEl._customSelectRefresh();
+    }
+    selectEl.dispatchEvent(new Event('custom-select:refresh', { bubbles: true }));
+  }
+
   // "No. of Karigar" and "No. of Majur" include 0, 0.5, 1, 1.5, 2, 2.5 plus whole numbers up to MAX_COUNT.
   function fillCountOptions() {
     const values = Array.from(
@@ -69,13 +78,16 @@
       ])
     ).sort((a, b) => a - b);
 
-    const options = values
+    const optionsHtml = values
       .map(v => `<option value="${v}">${v}</option>`)
       .join('');
 
     COUNT_IDS.forEach(id => {
-      $(id).innerHTML = options;
-      $(id).value = '0';
+      const el = $(id);
+      if (!el) return;
+      el.innerHTML = optionsHtml;
+      el.value = '0';
+      syncCustomSelect(el);
     });
   }
 
@@ -84,20 +96,27 @@
     if ([...select.options].some(o => o.value === v)) return;
     const before = sorted ? [...select.options].find(o => Number(o.value) > Number(v)) : null;
     select.add(new Option(label, v), before || null);
+    syncCustomSelect(select);
   }
 
   function setCount(id, value) {
     const n = Number(value);
     const v = Number.isFinite(n) && n >= 0 ? n : 0;
-    ensureOption($(id), v, String(v), true);
-    $(id).value = String(v);
+    const el = $(id);
+    if (!el) return;
+    ensureOption(el, v, String(v), true);
+    el.value = String(v);
+    syncCustomSelect(el);
   }
 
   function setShift(id, value) {
     const n = Number(value);
     const v = Number.isFinite(n) && n > 0 ? n : 1;       // records saved before shifts existed count as a full day
-    ensureOption($(id), v, `Custom (${v})`, true);
-    $(id).value = String(v);
+    const el = $(id);
+    if (!el) return;
+    ensureOption(el, v, `Custom (${v})`, true);
+    el.value = String(v);
+    syncCustomSelect(el);
   }
 
   // ---------------------------------------------------------------------------
@@ -297,6 +316,9 @@
   // Events
   // ---------------------------------------------------------------------------
   $('addEntryBtn').onclick = reset;
+  modalEl?.addEventListener('shown.bs.modal', () => {
+    COUNT_IDS.forEach(id => syncCustomSelect($(id)));
+  });
   $('entrySite').onchange = () => vendorOptions();
   $('entryVendor').onchange = preview;
 
@@ -431,6 +453,7 @@
   // ---------------------------------------------------------------------------
   // Start
   // ---------------------------------------------------------------------------
+  fillCountOptions();
   reset();
   render();
 })();
