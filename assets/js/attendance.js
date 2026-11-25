@@ -10,6 +10,7 @@
   const MAX_COUNT = 100;          // highest value offered in the "No. of Karigar / Majur" dropdowns
   const NORMAL_DAY_HOURS = 9;     // hourly rate = daily rate / 9
   const PAGE_SIZE = 10;           // number of records shown per batch in the register table
+  const BASE_COUNTS = [0, 0.5, 1, 1.5, 2, 2.5];
 
   const COUNT_IDS = ['karigarCount', 'majurCount'];
   const SHIFT_IDS = ['karigarShift', 'majurShift'];
@@ -59,18 +60,25 @@
   // ---------------------------------------------------------------------------
   // Dropdown helpers
   // ---------------------------------------------------------------------------
-  // "No. of Karigar" and "No. of Majur" are dropdowns from 0 to MAX_COUNT.
+  // "No. of Karigar" and "No. of Majur" include 0, 0.5, 1, 1.5, 2, 2.5 plus whole numbers up to MAX_COUNT.
   function fillCountOptions() {
-    const options = Array.from({ length: MAX_COUNT + 1 }, (_, i) => `<option value="${i}">${i}</option>`).join('');
+    const values = Array.from(
+      new Set([
+        ...BASE_COUNTS,
+        ...Array.from({ length: MAX_COUNT + 1 }, (_, i) => i)
+      ])
+    ).sort((a, b) => a - b);
+
+    const options = values
+      .map(v => `<option value="${v}">${v}</option>`)
+      .join('');
+
     COUNT_IDS.forEach(id => {
       $(id).innerHTML = options;
       $(id).value = '0';
     });
   }
 
-  // Make sure a saved value can be selected even if the list does not contain it
-  // (for example 2.5 saved by the older numeric input). Without this the dropdown
-  // would go blank and saving would silently change the record.
   function ensureOption(select, value, label, sorted = false) {
     const v = String(value);
     if ([...select.options].some(o => o.value === v)) return;
