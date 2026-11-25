@@ -7,10 +7,10 @@
   const ATT_KEY = 'montx-attendance-v1';
   const SITE_KEY = 'montx-sites-v1';
   const VENDOR_KEY = 'montx-vendors-v1';
-  const MAX_COUNT = 100;          // highest value offered in the "No. of Karigar / Majur" dropdowns
+  const MAX_COUNT = 50;           // highest value offered in the "No. of Karigar / Majur" dropdowns
+  const COUNT_STEP = 0.5;         // step increment from 0 to MAX_COUNT (0, 0.5, 1, 1.5, ..., 50)
   const NORMAL_DAY_HOURS = 9;     // hourly rate = daily rate / 9
   const PAGE_SIZE = 10;           // number of records shown per batch in the register table
-  const BASE_COUNTS = [0, 0.5, 1, 1.5, 2, 2.5];
 
   const COUNT_IDS = ['karigarCount', 'majurCount'];
   const SHIFT_IDS = ['karigarShift', 'majurShift'];
@@ -69,14 +69,10 @@
     selectEl.dispatchEvent(new Event('custom-select:refresh', { bubbles: true }));
   }
 
-  // "No. of Karigar" and "No. of Majur" include 0, 0.5, 1, 1.5, 2, 2.5 plus whole numbers up to MAX_COUNT.
+  // "No. of Karigar" and "No. of Majur" dropdowns from 0 to MAX_COUNT in 0.5 steps (0, 0.5, 1, 1.5, ..., 50).
   function fillCountOptions() {
-    const values = Array.from(
-      new Set([
-        ...BASE_COUNTS,
-        ...Array.from({ length: MAX_COUNT + 1 }, (_, i) => i)
-      ])
-    ).sort((a, b) => a - b);
+    const steps = Math.round(MAX_COUNT / COUNT_STEP);
+    const values = Array.from({ length: steps + 1 }, (_, i) => +(i * COUNT_STEP).toFixed(2));
 
     const optionsHtml = values
       .map(v => `<option value="${v}">${v}</option>`)
