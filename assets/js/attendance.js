@@ -8,7 +8,6 @@
   const SITE_KEY = 'montx-sites-v1';
   const VENDOR_KEY = 'montx-vendors-v1';
   const MAX_COUNT = 50;           // highest value offered in the "No. of Karigar / Majur" dropdowns
-  const COUNT_STEP = 0.5;         // step increment from 0 to MAX_COUNT (0, 0.5, 1, 1.5, ..., 50)
   const NORMAL_DAY_HOURS = 9;     // hourly rate = daily rate / 9
   const PAGE_SIZE = 10;           // number of records shown per batch in the register table
 
@@ -67,13 +66,23 @@
       selectEl._customSelectRefresh();
     }
     selectEl.dispatchEvent(new Event('custom-select:refresh', { bubbles: true }));
+    selectEl.dispatchEvent(new Event('change', { bubbles: false }));
   }
 
-  // "No. of Karigar" and "No. of Majur" dropdowns from 0 to MAX_COUNT in 0.5 steps (0, 0.5, 1, 1.5, ..., 50).
-  function fillCountOptions() {
-    const steps = Math.round(MAX_COUNT / COUNT_STEP);
-    const values = Array.from({ length: steps + 1 }, (_, i) => +(i * COUNT_STEP).toFixed(2));
+  // Exact list: 0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, ..., 49.5, 50
+  function getCountValues() {
+    const list = [];
+    for (let whole = 0; whole <= MAX_COUNT; whole++) {
+      list.push(whole);
+      if (whole < MAX_COUNT) {
+        list.push(whole + 0.5);
+      }
+    }
+    return list;
+  }
 
+  function fillCountOptions(preserveValue = '0') {
+    const values = getCountValues();
     const optionsHtml = values
       .map(v => `<option value="${v}">${v}</option>`)
       .join('');
@@ -81,8 +90,9 @@
     COUNT_IDS.forEach(id => {
       const el = $(id);
       if (!el) return;
+      const current = preserveValue ?? el.value ?? '0';
       el.innerHTML = optionsHtml;
-      el.value = '0';
+      el.value = values.some(v => String(v) === String(current)) ? String(current) : '0';
       syncCustomSelect(el);
     });
   }
@@ -100,6 +110,7 @@
     const v = Number.isFinite(n) && n >= 0 ? n : 0;
     const el = $(id);
     if (!el) return;
+    fillCountOptions(String(v));
     ensureOption(el, v, String(v), true);
     el.value = String(v);
     syncCustomSelect(el);
@@ -187,7 +198,7 @@
     $('attendanceForm').reset();
     $('entryId').value = '';
     $('entryDate').value = new Date().toISOString().slice(0, 10);
-    fillCountOptions();
+    fillCountOptions('0');
     HOUR_IDS.forEach(id => { $(id).value = 0; });
     SHIFT_IDS.forEach(id => { $(id).value = '1'; });
     $('modalTitle').textContent = 'Add attendance entry';
@@ -313,7 +324,10 @@
   // ---------------------------------------------------------------------------
   $('addEntryBtn').onclick = reset;
   modalEl?.addEventListener('shown.bs.modal', () => {
-    COUNT_IDS.forEach(id => syncCustomSelect($(id)));
+    COUNT_IDS.forEach(id => {
+      const el = $(id);
+      if (el) fillCountOptions(el.value);
+    });
   });
   $('entrySite').onchange = () => vendorOptions();
   $('entryVendor').onchange = preview;
@@ -449,7 +463,7 @@
   // ---------------------------------------------------------------------------
   // Start
   // ---------------------------------------------------------------------------
-  fillCountOptions();
+  fillCountOptions('0');
   reset();
   render();
 })();
